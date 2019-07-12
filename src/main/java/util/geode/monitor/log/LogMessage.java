@@ -2,6 +2,10 @@ package util.geode.monitor.log;
 
 import javax.management.Notification;
 
+/**
+ * @author PaulVermeulen
+ *
+ */
 public class LogMessage {
 	private LogHeader header;
 	private Notification event;

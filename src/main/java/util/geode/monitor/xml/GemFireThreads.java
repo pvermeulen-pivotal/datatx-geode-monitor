@@ -9,17 +9,17 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "", propOrder = {
-    "gemfireEvent"
+    "gemfireThread"
 })
-@XmlRootElement(name = "gemfireEvent")
-public class GemFireEvents {
+@XmlRootElement(name = "gemfireThread")
+public class GemFireThreads {
 
-    protected List<GemFireEvent> gemfireEvent;
+    protected List<GemFireThread> gemfireThread;
 
-    public List<GemFireEvent> getGemfireEventList() {
-        if (gemfireEvent == null) {
-            gemfireEvent = new ArrayList<GemFireEvent>();
+    public List<GemFireThread> getGemfireThreadList() {
+        if (gemfireThread == null) {
+            gemfireThread = new ArrayList<GemFireThread>();
         }
-        return this.gemfireEvent;
+        return this.gemfireThread;
     }
 }

@@ -7,20 +7,20 @@ import javax.xml.namespace.QName;
 
 @XmlRegistry
 public class GemFireEventObjectFactory {
-    private final QName _GemFireEvents_QNAME = new QName("", "gemfireEvents");
-    private final QName _GemFireEvent_QNAME = new QName("", "gemfireEvent");
+    private final QName _GemFireThreads_QNAME = new QName("", "gemfireThreads");
+    private final QName _GemFireThread_QNAME = new QName("", "gemfireThread");
 
     public GemFireEventObjectFactory() {
     }
 
-    @XmlElementDecl(namespace = "", name = "gemfireEvents")
-    public JAXBElement<GemFireEvents> createGemfireMessages(GemFireEvents value) {
-        return new JAXBElement<GemFireEvents>(_GemFireEvents_QNAME, GemFireEvents.class, null, value);
+    @XmlElementDecl(namespace = "", name = "gemfireThreads")
+    public JAXBElement<GemFireThreads> createGemfireMessages(GemFireThreads value) {
+        return new JAXBElement<GemFireThreads>(_GemFireThreads_QNAME, GemFireThreads.class, null, value);
     }
 
-    @XmlElementDecl(namespace = "", name = "gemfireEvent")
-    public JAXBElement<GemFireEvent> createGemfireMessage(GemFireEvent value) {
-        return new JAXBElement<GemFireEvent>(_GemFireEvent_QNAME, GemFireEvent.class, null, value);
+    @XmlElementDecl(namespace = "", name = "gemfireThread")
+    public JAXBElement<GemFireThread> createGemfireMessage(GemFireThread value) {
+        return new JAXBElement<GemFireThread>(_GemFireThread_QNAME, GemFireThread.class, null, value);
     }
 
 }

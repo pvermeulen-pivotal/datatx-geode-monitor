@@ -2,8 +2,8 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>util.geode.monitor</groupId>
-	<artifactId>geode-monitor</artifactId>
+	<groupId>util.datatx.geode</groupId>
+	<artifactId>datatx-geode-monitor</artifactId>
 	<version>1.0.0</version>
 
 	<build>
@@ -19,41 +19,6 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<!-- <build> -->
-	<!-- <plugins> -->
-	<!-- <plugin> -->
-	<!-- <artifactId>maven-assembly-plugin</artifactId> -->
-	<!-- <version>2.3</version> -->
-	<!-- <executions> -->
-	<!-- <execution> -->
-	<!-- <id>make-assembly</id> -->
-	<!-- <phase>package</phase> -->
-	<!-- <goals> -->
-	<!-- <goal>single</goal> -->
-	<!-- </goals> -->
-	<!-- <configuration> -->
-	<!-- <descriptors> -->
-	<!-- <descriptor>assembly.xml</descriptor> -->
-	<!-- </descriptors> -->
-	<!-- </configuration> -->
-	<!-- </execution> -->
-	<!-- </executions> -->
-	<!-- </plugin> -->
-	<!-- <plugin> -->
-	<!-- <groupId>org.apache.maven.plugins</groupId> -->
-	<!-- <artifactId>maven-jar-plugin</artifactId> -->
-	<!-- <version>2.4</version> -->
-	<!-- <configuration> -->
-	<!-- <excludes> -->
-	<!-- <exclude>*.xml</exclude> -->
-	<!-- <exclude>*.properties</exclude> -->
-	<!-- </excludes> -->
-	<!-- </configuration> -->
-	<!-- </plugin> -->
-
-	<!-- </plugins> -->
-	<!-- </build> -->
 
 	<dependencies>
 		<dependency>
@@ -72,15 +37,15 @@
 			<artifactId>jaxb-api</artifactId>
 			<version>2.2.5</version>
 		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>com.sun.mail</groupId> -->
-		<!-- <artifactId>javax.mail</artifactId> -->
-		<!-- <version>1.4.4</version> -->
-		<!-- </dependency> -->
 		<dependency>
 			<groupId>com.sun.xml.bind</groupId>
 			<artifactId>jaxb-impl</artifactId>
 			<version>2.2.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.7</version>
 		</dependency>
 	</dependencies>
 

@@ -1,5 +1,9 @@
 package util.geode.monitor;
 
+/**
+ * @author PaulVermeulen
+ *
+ */
 public class Constants {
 
 	public static enum LogType {
@@ -21,8 +25,8 @@ public class Constants {
 	public static final String ERROR = "ERROR";
 	public static final String NOT_DEFINED = "NOT DEFINED";
 	public static final String EXCLUDED_MESSAGE_FILE = "excludedMessages.xml";
-	public static final String GEMFIRE_MESSAGE_FILE = "gemfireEvents.xml";
-	public static final String MXBEAN_FILE = "statistics.xml";
+	public static final String GEMFIRE_THREAD_FILE = "gemfireThreads.xml";
+	public static final String MXBEAN_FILE = "mxbeans.xml";
 	public static final String HM_PROPS = "monitor.properties";
 	public static final String DATE_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss:SSS";
 	public static final String DATE_FORMAT = "yyyy/MM/dd";

@@ -2,6 +2,10 @@ package util.geode.monitor;
 
 import java.math.BigDecimal;
 
+/**
+ * @author PaulVermeulen
+ *
+ */
 public class ThresholdDetail {
 
 	public enum DetailType {

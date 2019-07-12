@@ -1,5 +1,9 @@
 package util.geode.monitor.log;
 
+/**
+ * @author PaulVermeulen
+ *
+ */
 public class LogHeader {
 	private String severity;
 	private String date;

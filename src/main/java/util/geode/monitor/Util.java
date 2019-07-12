@@ -17,6 +17,10 @@ import util.geode.monitor.log.LogHeader;
 import util.geode.monitor.log.LogMessage;
 import util.geode.monitor.xml.ExcludedMessage;
 
+/**
+ * @author PaulVermeulen
+ *
+ */
 public class Util {
 
 	/**

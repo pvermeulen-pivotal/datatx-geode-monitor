@@ -7,17 +7,17 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "")
-public class GemFireEvent {
+public class GemFireThread {
 
-    @XmlAttribute(name = "event")
-    protected String event;
+    @XmlAttribute(name = "thread")
+    protected String thread;
 
-    public String getEvent() {
-        return event;
+    public String getThread() {
+        return thread;
     }
 
-    public void setEvent(String value) {
-        this.event = value;
+    public void setThread(String value) {
+        this.thread = value;
     }
 
 }

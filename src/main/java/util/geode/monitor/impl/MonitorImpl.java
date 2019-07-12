@@ -17,8 +17,11 @@ import javax.xml.bind.JAXBContext;
 
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
+
+//import org.apache.commons.lang3.StringUtils;
 
 import util.geode.monitor.Constants;
 import util.geode.monitor.Constants.ListType;
@@ -34,9 +37,9 @@ import util.geode.monitor.xml.ExcludedMessage;
 import util.geode.monitor.xml.ExcludedMessageObjectFactory;
 import util.geode.monitor.xml.ExcludedMessages;
 import util.geode.monitor.xml.FieldSizeType;
-import util.geode.monitor.xml.GemFireEvent;
+import util.geode.monitor.xml.GemFireThread;
 import util.geode.monitor.xml.GemFireEventObjectFactory;
-import util.geode.monitor.xml.GemFireEvents;
+import util.geode.monitor.xml.GemFireThreads;
 import util.geode.monitor.xml.MxBeanType;
 import util.geode.monitor.xml.MxBeans;
 import util.geode.monitor.xml.MxBeansObjectFactory;
@@ -58,7 +61,7 @@ public abstract class MonitorImpl implements Monitor {
 	private AtomicBoolean jmxConnectionActive = new AtomicBoolean(false);
 	private List<LogMessage> messages = new ArrayList<LogMessage>();
 	private ExcludedMessages excludedMessages = new ExcludedMessages();
-	private GemFireEvents gemfireEvents = new GemFireEvents();
+	private GemFireThreads gemfireThreads = new GemFireThreads();
 	private Logger applicationLog;
 	private Logger exceptionLog;
 	private ScheduledThreadPoolExecutor scheduleExecutor = new ScheduledThreadPoolExecutor(1);
@@ -119,8 +122,8 @@ public abstract class MonitorImpl implements Monitor {
 	public void initialize() throws Exception {
 		loadMonitorProps();
 		createLogAppender();
-		setGemfireEvents((GemFireEvents) getUtil().processJAXB(JAXBContext.newInstance(GemFireEventObjectFactory.class),
-				Constants.GEMFIRE_MESSAGE_FILE));
+		setGemfireThreads((GemFireThreads) getUtil()
+				.processJAXB(JAXBContext.newInstance(GemFireEventObjectFactory.class), Constants.GEMFIRE_THREAD_FILE));
 		setExcludedMessages((ExcludedMessages) getUtil().processJAXB(
 				JAXBContext.newInstance(ExcludedMessageObjectFactory.class), Constants.EXCLUDED_MESSAGE_FILE));
 		setMxBeans((MxBeans) getUtil().processJAXB(JAXBContext.newInstance(MxBeansObjectFactory.class),
@@ -177,7 +180,7 @@ public abstract class MonitorImpl implements Monitor {
 				setMbs(jmxConnection.getMBeanServerConnection());
 				setConnectionListener(addConnectionNotificationListener());
 				getJmxConnection().addConnectionNotificationListener(getConnectionListener(), null, null);
-				setMbsListener(addNotificationListener());
+				setMbsListener(addGemFireNotificationListener());
 				getMbs().addNotificationListener(getSystemName(), getMbsListener(), null, null);
 				setReconnectRetryCount(0);
 				setupMonitoring();
@@ -332,7 +335,7 @@ public abstract class MonitorImpl implements Monitor {
 	 * 
 	 * @throws Exception
 	 */
-	private NotificationListener addNotificationListener() throws Exception {
+	private NotificationListener addGemFireNotificationListener() throws Exception {
 
 		return new NotificationListener() {
 
@@ -464,7 +467,7 @@ public abstract class MonitorImpl implements Monitor {
 		logMessage.setEvent(notification);
 		logMessage.setBody(notification.getMessage());
 		if (validMessage(logMessage)) {
-			if (!checkDuplicate(logMessage)) {
+			if (!checkForDuplicateMessage(logMessage)) {
 				messages.add(logMessage);
 				sendAlert(logMessage);
 				writeLog(logMessage);
@@ -490,13 +493,37 @@ public abstract class MonitorImpl implements Monitor {
 		StringBuilder str = new StringBuilder();
 		SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_TIME_FORMAT);
 		String dt = sdf.format(new Date());
-		str.append(getEnvironment());
-		str.append(" | " + getCluster());
-		str.append(" | " + getSite());
+		str.append(getLoggingHeader());
 		str.append(" | " + dt);
 		str.append(" | " + logType);
 		str.append(" | " + memberData);
 		getApplicationLog().info(str.toString() + " | " + message + " " + userData);
+	}
+
+	/**
+	 * Creates the environment, cluster and site names if defined otherwise use
+	 * default names
+	 * 
+	 * @return environment, cluster and site names
+	 */
+	private String getLoggingHeader() {
+		StringBuilder sb = new StringBuilder();
+		if (getEnvironment() != null && getEnvironment().length() > 0) {
+			sb.append(getEnvironment());
+		} else {
+			sb.append("Environment");
+		}
+		if (getCluster() != null && getCluster().length() > 0) {
+			sb.append(" | " + getCluster());
+		} else {
+			sb.append(" | Cluster");
+		}
+		if (getSite() != null && getSite().length() > 0) {
+			sb.append(" | " + getSite());
+		} else {
+			sb.append(" | Site");
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -506,9 +533,7 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private void writeLog(LogMessage logMessage) {
 		StringBuilder str = new StringBuilder();
-		str.append(getEnvironment());
-		str.append(" | " + getCluster());
-		str.append(" | " + getSite());
+		str.append(getLoggingHeader());
 		str.append(" | " + logMessage.getHeader().getDate() + " " + logMessage.getHeader().getTime());
 		str.append(" | " + logMessage.getHeader().getSeverity());
 		str.append(" | " + logMessage.getHeader().getMember());
@@ -524,12 +549,6 @@ public abstract class MonitorImpl implements Monitor {
 	public abstract void sendAlert(LogMessage logMessage);
 
 	/**
-	 * send alert
-	 * 
-	 * @param logMessage
-	 * @param emmGroup
-	 */
-	/**
 	 * Check for duplicate event messages. Event message timeout after a define
 	 * period.
 	 * 
@@ -538,15 +557,15 @@ public abstract class MonitorImpl implements Monitor {
 	 * @param message
 	 * @return
 	 */
-	private boolean checkDuplicate(LogMessage message) {
+	private boolean checkForDuplicateMessage(LogMessage message) {
 		for (LogMessage logMessage : messages) {
 			if (logMessage.getHeader().getSeverity().equals(message.getHeader().getSeverity())
 					&& logMessage.getHeader().getMember().equals(message.getHeader().getMember())) {
 				if (!logMessage.getHeader().getEvent().equals(message.getHeader().getEvent())) {
-					if (checkGemfireEvent(logMessage.getHeader().getEvent(), message.getHeader().getEvent()))
+					if (checkGemfireThread(logMessage.getHeader().getEvent(), message.getHeader().getEvent()))
 						return true;
 				} else {
-					if (checkGemfireEvent(logMessage.getHeader().getEvent(), message.getHeader().getEvent()))
+					if (checkGemfireThread(logMessage.getHeader().getEvent(), message.getHeader().getEvent()))
 						return true;
 				}
 				if (logMessage.getBody().equals(message.getBody())) {
@@ -568,18 +587,18 @@ public abstract class MonitorImpl implements Monitor {
 	}
 
 	/**
-	 * Checks for a special duplicate event message
+	 * Checks for a special duplicate thread message
 	 * 
 	 * GF example. When the gateway is running you can get the same message for
 	 * various threads that are identical. This method prevents sending duplicates.
 	 * 
-	 * @param existingEvent
-	 * @param newEvent
+	 * @param existingThread
+	 * @param newThread
 	 * @return
 	 */
-	private boolean checkGemfireEvent(String existingEvent, String newEvent) {
-		for (GemFireEvent gfMessage : getGemfireEvents().getGemfireEventList()) {
-			if ((existingEvent.contains(gfMessage.getEvent())) && (newEvent.contains(gfMessage.getEvent()))) {
+	private boolean checkGemfireThread(String existingThread, String newThread) {
+		for (GemFireThread gfMessage : getGemfireThreads().getGemfireThreadList()) {
+			if ((existingThread.contains(gfMessage.getThread())) && (newThread.contains(gfMessage.getThread()))) {
 				return true;
 			}
 		}
@@ -704,8 +723,8 @@ public abstract class MonitorImpl implements Monitor {
 	}
 
 	/**
-	 * This class is used to schedule reconnections in the event the JMX monitor
-	 * went down
+	 * This class is used to schedule reconnection in the event the JMX monitor went
+	 * down
 	 * 
 	 */
 	private class AgentMonitorTask extends TimerTask {
@@ -810,13 +829,17 @@ public abstract class MonitorImpl implements Monitor {
 	 * @throws Exception
 	 */
 	private void getUniqueAttributes(MxBeans.MxBean bean, String server, ObjectNameType type) throws Exception {
+		boolean percentFieldValue = false;
 		String[] attributes = null;
 		ObjectName oName;
 
 		for (MxBeans.MxBean.Fields.Field field : bean.getFields().getField()) {
+			percentFieldValue = false;
 			attributes = new String[2];
 			if (field.getPercentageField().equals("")) {
 				attributes[0] = field.getFieldName();
+			} else if (field.getPercentageField() != null && StringUtils.isNumeric(field.getPercentageField())) {
+				percentFieldValue = true;
 			} else {
 				attributes[0] = field.getFieldName();
 				attributes[1] = field.getPercentageField();
@@ -831,6 +854,9 @@ public abstract class MonitorImpl implements Monitor {
 				oName = getUtil().getObjectName(mbs, systemName, type, server, field.getBeanProperty());
 			}
 			AttributeList attrList = getUtil().getAttributes(mbs, oName, attributes);
+			if (percentFieldValue) {
+				attrList.add(new Attribute(field.getFieldName() + "-constant", field.getPercentageField()));
+			}
 			doThreshold(attrList, bean, field, oName);
 		}
 	}
@@ -847,16 +873,23 @@ public abstract class MonitorImpl implements Monitor {
 	 * @throws Exception
 	 */
 	private void getAttributes(MxBeans.MxBean bean, ObjectName oName) throws Exception {
+		boolean percentFieldValue = false;
 		String[] attributes = null;
 		for (MxBeans.MxBean.Fields.Field field : bean.getFields().getField()) {
+			percentFieldValue = false;
 			attributes = new String[2];
-			if (field.getPercentageField().equals("")) {
+			if (field.getPercentageField().equals("") || field.getPercentageField() == null) {
 				attributes[0] = field.getFieldName();
+			} else if (field.getPercentageField() != null && StringUtils.isNumeric(field.getPercentageField())) {
+				percentFieldValue = true;
 			} else {
 				attributes[0] = field.getFieldName();
 				attributes[1] = field.getPercentageField();
 			}
 			AttributeList attrList = getUtil().getAttributes(mbs, oName, attributes);
+			if (percentFieldValue) {
+				attrList.add(new Attribute(field.getFieldName() + "-constant", field.getPercentageField()));
+			}
 			doThreshold(attrList, bean, field, oName);
 		}
 	}
@@ -1020,10 +1053,6 @@ public abstract class MonitorImpl implements Monitor {
 		}
 	}
 
-	/**
-	 * @param args
-	 * @throws Exception
-	 */
 	private ScheduledThreadPoolExecutor getScheduleExecutor() {
 		return scheduleExecutor;
 	}
@@ -1140,12 +1169,12 @@ public abstract class MonitorImpl implements Monitor {
 		this.mxBeans = mxBeans;
 	}
 
-	private GemFireEvents getGemfireEvents() {
-		return gemfireEvents;
+	private GemFireThreads getGemfireThreads() {
+		return gemfireThreads;
 	}
 
-	private void setGemfireEvents(GemFireEvents gemfireEvents) {
-		this.gemfireEvents = gemfireEvents;
+	private void setGemfireThreads(GemFireThreads gemfireThreads) {
+		this.gemfireThreads = gemfireThreads;
 	}
 
 	private void setReconnectRetryAttempts(int reconnectRetryAttempts) {

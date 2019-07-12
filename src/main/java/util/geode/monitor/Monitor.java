@@ -3,6 +3,10 @@ package util.geode.monitor;
 import util.geode.monitor.log.LogMessage;
 import util.geode.monitor.xml.ExcludedMessages;
 
+/**
+ * @author PaulVermeulen
+ *
+ */
 public interface Monitor {
 	public void sendAlert(LogMessage logMessage);	
 	public int getCommandPort();
