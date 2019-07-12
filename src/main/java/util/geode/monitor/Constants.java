@@ -38,7 +38,7 @@ public class Constants {
 	public static final String SUSPECT = "gemfire.distributedsystem.cache.member.suspect";
 	public static final String ALERT = "system.alert";
 	public static final String OK = "OK";
-	public static final String NOT_OK = "NOT_OK";
+	public static final String INVALID_CMD = "INVALID COMMAND";
 	public static final String RUNNING = "RUNNING - NOT CONNECTED TO JMX MANAGER";
 	public static final String RUNNING_CONNECT = "RUNNING - CONNECTED TO JMX MANAGER";
 	public static final String DISTRIBUTED_SYSTEM_OBJECT_NAME = "GemFire:service=System,type=Distributed";
@@ -80,7 +80,7 @@ public class Constants {
 	public static final String E_COMMAND_PORT = "command port must be an integer between zero and 65535.";
 	public static final String E_PROC_PROPS = "Error processing monitor properties: ";
 	public static final String RELOAD = "RELOAD";
-	public static final String EXIT = "EXIT";
+	public static final String SHUTDOWN = "SHUTDOWN";
 	public static final String STATUS = "STATUS";
 	public static final String LIST_CACHE_SERVERS_OBJECTS = "listCacheServerObjectNames";
 	public static final String LIST_GATEWAY_SENDERS_OBJECTS = "listGatewaySenderObjectNames";
