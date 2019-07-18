@@ -38,7 +38,7 @@ import util.geode.monitor.xml.ExcludedMessageObjectFactory;
 import util.geode.monitor.xml.ExcludedMessages;
 import util.geode.monitor.xml.FieldSizeType;
 import util.geode.monitor.xml.GemFireThread;
-import util.geode.monitor.xml.GemFireThreqadObjectFactory;
+import util.geode.monitor.xml.GemFireThreadObjectFactory;
 import util.geode.monitor.xml.GemFireThreads;
 import util.geode.monitor.xml.MxBeanType;
 import util.geode.monitor.xml.MxBeans;
@@ -49,8 +49,8 @@ import util.geode.monitor.xml.MxBeans.MxBean;
  * @author PaulVermeulen
  *
  */
-public abstract class MonitorImpl implements Monitor {
 
+public abstract class MonitorImpl implements Monitor {
 	private Util util = new Util();
 	private MxBeans mxBeans;
 	private JMXConnector jmxConnection;
@@ -123,8 +123,8 @@ public abstract class MonitorImpl implements Monitor {
 	public void initialize() throws Exception {
 		loadMonitorProps();
 		createLogAppender();
-		setGemfireThreads((GemFireThreads) getUtil().processJAXB(
-				JAXBContext.newInstance(GemFireThreqadObjectFactory.class), Constants.GEMFIRE_THREAD_FILE));
+		setGemfireThreads((GemFireThreads) getUtil()
+				.processJAXB(JAXBContext.newInstance(GemFireThreadObjectFactory.class), Constants.GEMFIRE_THREAD_FILE));
 		setExcludedMessages((ExcludedMessages) getUtil().processJAXB(
 				JAXBContext.newInstance(ExcludedMessageObjectFactory.class), Constants.EXCLUDED_MESSAGE_FILE));
 		setMxBeans((MxBeans) getUtil().processJAXB(JAXBContext.newInstance(MxBeansObjectFactory.class),
@@ -379,6 +379,13 @@ public abstract class MonitorImpl implements Monitor {
 		};
 	}
 
+	/**
+	 * Checks to see if a member is blocked
+	 * 
+	 * @param blockId
+	 * 
+	 * @return boolean
+	 */
 	private boolean isBlocked(String blockId) {
 		for (String blocker : blockers) {
 			if (blocker.equals(blockId))

@@ -1,6 +1,12 @@
+.DS_Store
 .classpath
 .project
 .settings/
 _classpath.xml
 _project.xml
 target/
+src/.DS_Store
+src/main/.DS_Store
+src/main/java/.DS_Store
+src/main/java/util/.DS_Store
+src/main/java/util/geode/.DS_Store
