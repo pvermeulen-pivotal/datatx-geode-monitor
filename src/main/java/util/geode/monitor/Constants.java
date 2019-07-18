@@ -82,6 +82,8 @@ public class Constants {
 	public static final String RELOAD = "RELOAD";
 	public static final String SHUTDOWN = "SHUTDOWN";
 	public static final String STATUS = "STATUS";
+	public static final String BLOCK = "BLOCK";
+	public static final String UNBLOCK = "UNBLOCK";
 	public static final String LIST_CACHE_SERVERS_OBJECTS = "listCacheServerObjectNames";
 	public static final String LIST_GATEWAY_SENDERS_OBJECTS = "listGatewaySenderObjectNames";
 	public static final String LIST_GATEWAY_RECEIVERS_OBJECTS = "listGatewayReceiverObjectNames";

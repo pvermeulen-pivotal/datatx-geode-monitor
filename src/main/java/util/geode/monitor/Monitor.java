@@ -17,4 +17,7 @@ public interface Monitor {
 	public boolean isShutdown();
 	public void setExcludedMessages(ExcludedMessages messages);
 	public void setShutdown(boolean shutdown);
+	public String[] getBlockers();
+	public void addBlocker(String blockerId);
+	public void removeBlocker(String blockerId);
 }

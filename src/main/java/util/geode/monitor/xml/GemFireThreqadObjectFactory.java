@@ -6,11 +6,11 @@ import javax.xml.bind.annotation.XmlRegistry;
 import javax.xml.namespace.QName;
 
 @XmlRegistry
-public class GemFireEventObjectFactory {
+public class GemFireThreqadObjectFactory {
     private final QName _GemFireThreads_QNAME = new QName("", "gemfireThreads");
     private final QName _GemFireThread_QNAME = new QName("", "gemfireThread");
 
-    public GemFireEventObjectFactory() {
+    public GemFireThreqadObjectFactory() {
     }
 
     @XmlElementDecl(namespace = "", name = "gemfireThreads")

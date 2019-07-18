@@ -38,7 +38,7 @@ import util.geode.monitor.xml.ExcludedMessageObjectFactory;
 import util.geode.monitor.xml.ExcludedMessages;
 import util.geode.monitor.xml.FieldSizeType;
 import util.geode.monitor.xml.GemFireThread;
-import util.geode.monitor.xml.GemFireEventObjectFactory;
+import util.geode.monitor.xml.GemFireThreqadObjectFactory;
 import util.geode.monitor.xml.GemFireThreads;
 import util.geode.monitor.xml.MxBeanType;
 import util.geode.monitor.xml.MxBeans;
@@ -87,6 +87,7 @@ public abstract class MonitorImpl implements Monitor {
 	private int nextHostIndex;
 	private String lastJmxHost = "";
 	private JMXServiceURL url = null;
+	private String[] blockers;
 
 	public MonitorImpl() {
 	}
@@ -122,8 +123,8 @@ public abstract class MonitorImpl implements Monitor {
 	public void initialize() throws Exception {
 		loadMonitorProps();
 		createLogAppender();
-		setGemfireThreads((GemFireThreads) getUtil()
-				.processJAXB(JAXBContext.newInstance(GemFireEventObjectFactory.class), Constants.GEMFIRE_THREAD_FILE));
+		setGemfireThreads((GemFireThreads) getUtil().processJAXB(
+				JAXBContext.newInstance(GemFireThreqadObjectFactory.class), Constants.GEMFIRE_THREAD_FILE));
 		setExcludedMessages((ExcludedMessages) getUtil().processJAXB(
 				JAXBContext.newInstance(ExcludedMessageObjectFactory.class), Constants.EXCLUDED_MESSAGE_FILE));
 		setMxBeans((MxBeans) getUtil().processJAXB(JAXBContext.newInstance(MxBeansObjectFactory.class),
@@ -343,28 +344,47 @@ public abstract class MonitorImpl implements Monitor {
 
 				if (isAttachedToManager()) {
 					if (Constants.JOINED.equals(notification.getType())) {
-						createNotification(LogType.INFO.toString(), notification,
-								notification.getSource() + " : " + Constants.M_MEMBER_JOINED, Constants.CLEAR);
+						if (!isBlocked((String) notification.getSource())) {
+							createNotification(LogType.INFO.toString(), notification,
+									notification.getSource() + " : " + Constants.M_MEMBER_JOINED, Constants.CLEAR);
+						}
 					} else if (Constants.LEFT.equals(notification.getType())) {
-						createNotification(LogType.ERROR.toString(), notification,
-								notification.getSource() + " : " + Constants.M_MEMBER_LEFT, Constants.MAJOR);
+						if (!isBlocked((String) notification.getSource())) {
+							createNotification(LogType.ERROR.toString(), notification,
+									notification.getSource() + " : " + Constants.M_MEMBER_LEFT, Constants.MAJOR);
+						}
 					} else if (Constants.CRASHED.equals(notification.getType())) {
-						createNotification(LogType.ERROR.toString(), notification,
-								notification.getSource() + " : " + Constants.M_MEMBER_CRASH, Constants.CRITICAL);
+						if (!isBlocked((String) notification.getSource())) {
+							createNotification(LogType.ERROR.toString(), notification,
+									notification.getSource() + " : " + Constants.M_MEMBER_CRASH, Constants.CRITICAL);
+						}
 					} else if (Constants.SUSPECT.equals(notification.getType())) {
 						if (!notification.getMessage().contains("By")) {
-							createNotification(LogType.ERROR.toString(), notification,
-									notification.getSource() + " : " + Constants.M_MEMBER_SUSPECT, Constants.CRITICAL);
+							if (!isBlocked((String) notification.getSource())) {
+								createNotification(LogType.ERROR.toString(), notification,
+										notification.getSource() + " : " + Constants.M_MEMBER_SUSPECT,
+										Constants.CRITICAL);
+							}
 						}
 					} else if (Constants.ALERT.equals(notification.getType())) {
-						log(getUtil().getUserDataInfo(Constants.ALERT_LEVEL, notification.getUserData()),
-								(String) getUtil().getUserDataInfo(Constants.MEMBER, notification.getUserData()),
-								notification.getMessage(), notification.getUserData());
-						processMessage(notification);
+						if (!isBlocked((String) notification.getSource())) {
+							log(getUtil().getUserDataInfo(Constants.ALERT_LEVEL, notification.getUserData()),
+									(String) getUtil().getUserDataInfo(Constants.MEMBER, notification.getUserData()),
+									notification.getMessage(), notification.getUserData());
+							processMessage(notification);
+						}
 					}
 				}
 			}
 		};
+	}
+
+	private boolean isBlocked(String blockId) {
+		for (String blocker : blockers) {
+			if (blocker.equals(blockId))
+				return true;
+		}
+		return false;
 	}
 
 	/**
@@ -1327,6 +1347,35 @@ public abstract class MonitorImpl implements Monitor {
 
 	public Util getUtil() {
 		return util;
+	}
+
+	public String[] getBlockers() {
+		return blockers;
+	}
+
+	public void addBlocker(String blockerId) {
+		List<String> lBlockers = null;
+		if (blockers == null || blockers.length == 0) {
+			lBlockers = new ArrayList<String>();
+		} else {
+			lBlockers = Arrays.asList(blockers);
+		}
+		lBlockers.add(blockerId);
+		String[] aBlockers = new String[lBlockers.size()];
+		lBlockers.toArray(aBlockers);
+		blockers = aBlockers;
+	}
+
+	public void removeBlocker(String blockerId) {
+		List<String> lBlockers = new ArrayList<String>();
+		for (String blocker : blockers) {
+			if (!blocker.equals(blockerId)) {
+				lBlockers.add(blocker);
+			}
+		}
+		String[] aBlockers = new String[lBlockers.size()];
+		lBlockers.toArray(aBlockers);
+		blockers = aBlockers;
 	}
 
 }
