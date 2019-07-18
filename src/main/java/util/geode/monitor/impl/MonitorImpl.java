@@ -792,52 +792,62 @@ public abstract class MonitorImpl implements Monitor {
 				break;
 			case MEMBER_MX_BEAN:
 				for (ObjectName name : getMembers()) {
-					getAttributes(bean, name);
+					if (!isBlocked(name.getCanonicalName()))
+						getAttributes(bean, name);
 				}
 				break;
 			case CACHE_SERVER_MX_BEAN:
 				for (ObjectName name : getCacheServers()) {
-					getAttributes(bean, name);
+					if (!isBlocked(name.getCanonicalName()))
+						getAttributes(bean, name);
 				}
 				break;
 			case DISK_STORE_MX_BEAN:
 				for (String name : getServers()) {
-					getUniqueAttributes(bean, name, Constants.ObjectNameType.DISK_STORE);
+					if (!isBlocked(name))
+						getUniqueAttributes(bean, name, Constants.ObjectNameType.DISK_STORE);
 				}
 				break;
 			case REGION_MX_BEAN:
 				for (String name : getServers()) {
-					getUniqueAttributes(bean, name, Constants.ObjectNameType.REGION);
+					if (!isBlocked(name))
+						getUniqueAttributes(bean, name, Constants.ObjectNameType.REGION);
 				}
 				break;
 			case LOCK_SERVICE_MX_BEAN:
 				for (String name : getServers()) {
-					getUniqueAttributes(bean, name, Constants.ObjectNameType.LOCK);
+					if (!isBlocked(name))
+						getUniqueAttributes(bean, name, Constants.ObjectNameType.LOCK);
 				}
 				break;
 			case ASYNC_EVENT_QUEUE_MX_BEAN:
 				for (String name : getServers()) {
-					getUniqueAttributes(bean, name, Constants.ObjectNameType.ASYNC_QUEUES);
+					if (!isBlocked(name))
+						getUniqueAttributes(bean, name, Constants.ObjectNameType.ASYNC_QUEUES);
 				}
 				break;
 			case GATEWAY_SENDER_MX_BEAN:
 				for (String name : getServers()) {
-					getUniqueAttributes(bean, name, Constants.ObjectNameType.GATEWAY_SENDERS);
+					if (!isBlocked(name))
+						getUniqueAttributes(bean, name, Constants.ObjectNameType.GATEWAY_SENDERS);
 				}
 				break;
 			case GATEWAY_RECEIVER_MX_BEAN:
 				for (String name : getServers()) {
-					getUniqueAttributes(bean, name, Constants.ObjectNameType.GATEWAY_RECEIVERS);
+					if (!isBlocked(name))
+						getUniqueAttributes(bean, name, Constants.ObjectNameType.GATEWAY_RECEIVERS);
 				}
 				break;
 			case DISTRIBUTED_REGION_MX_BEAN:
 				for (ObjectName name : getDistributedRegions()) {
-					getAttributes(bean, name);
+					if (!isBlocked(name.getCanonicalName()))
+						getAttributes(bean, name);
 				}
 				break;
 			case DISTRIBUTED_LOCK_SERVICE_MX_BEAN:
 				for (ObjectName name : getDistributedLocks()) {
-					getAttributes(bean, name);
+					if (!isBlocked(name.getCanonicalName()))
+						getAttributes(bean, name);
 				}
 				break;
 			}
