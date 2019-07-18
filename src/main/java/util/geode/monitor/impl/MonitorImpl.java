@@ -387,9 +387,11 @@ public abstract class MonitorImpl implements Monitor {
 	 * @return boolean
 	 */
 	private boolean isBlocked(String blockId) {
-		for (String blocker : blockers) {
-			if (blocker.equals(blockId))
-				return true;
+		if (blockers != null && blockers.length > 0) {
+			for (String blocker : blockers) {
+				if (blocker.equals(blockId))
+					return true;
+			}
 		}
 		return false;
 	}
@@ -792,13 +794,13 @@ public abstract class MonitorImpl implements Monitor {
 				break;
 			case MEMBER_MX_BEAN:
 				for (ObjectName name : getMembers()) {
-					if (!isBlocked(name.getCanonicalName()))
+					if (!isBlocked(name.getKeyProperty("member")))
 						getAttributes(bean, name);
 				}
 				break;
 			case CACHE_SERVER_MX_BEAN:
 				for (ObjectName name : getCacheServers()) {
-					if (!isBlocked(name.getCanonicalName()))
+					if (!isBlocked(name.getKeyProperty("member")))
 						getAttributes(bean, name);
 				}
 				break;
@@ -840,13 +842,13 @@ public abstract class MonitorImpl implements Monitor {
 				break;
 			case DISTRIBUTED_REGION_MX_BEAN:
 				for (ObjectName name : getDistributedRegions()) {
-					if (!isBlocked(name.getCanonicalName()))
+					if (!isBlocked(name.getKeyProperty("member")))
 						getAttributes(bean, name);
 				}
 				break;
 			case DISTRIBUTED_LOCK_SERVICE_MX_BEAN:
 				for (ObjectName name : getDistributedLocks()) {
-					if (!isBlocked(name.getCanonicalName()))
+					if (!isBlocked(name.getKeyProperty("member")))
 						getAttributes(bean, name);
 				}
 				break;
