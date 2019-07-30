@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>util.datatx.geode</groupId>
 	<artifactId>datatx-geode-monitor</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.0.SNAPSHOT</version>
 
 	<build>
 		<plugins>
@@ -50,6 +50,16 @@
 	</dependencies>
 
 	<repositories>
+		<repository>
+			<id>gemfire-release-repo</id>
+			<name>Pivotal GemFire Release Repository</name>
+			<url>http://commercial-repo.pivotal.io/data3/gemfire-release-repo/gemfire</url>
+		</repository>
+		<repository>
+			<id>spring-libs-release</id>
+			<url>http://repo.spring.io/libs-release/</url>
+			<name>spring-libs-release</name>
+		</repository>
 		<repository>
 			<id>maven</id>
 			<url>http://repo.maven.apache.org/maven2/</url>
