@@ -999,71 +999,83 @@ public abstract class MonitorImpl implements Monitor {
 			FieldSizeType fieldType, FieldSizeType percentFieldType) {
 		long l1 = 0;
 		long l2 = 0;
-		long cnt = Long.parseLong(String.valueOf(count));
-		Attribute attribute = (Attribute) attributes.get(0);
-		if (attribute.getValue() instanceof Integer) {
-			l1 = Long.parseLong(String.valueOf(attribute.getValue()));
+		Attribute attribute = null;
+		try {
+			long cnt = Long.parseLong(String.valueOf(count));
+			attribute = (Attribute) attributes.get(0);
+			if (attribute.getValue() instanceof Integer) {
+				l1 = Long.parseLong(String.valueOf(attribute.getValue()));
+				if (attributes.size() == 2) {
+					attribute = (Attribute) attributes.get(1);
+					l2 = Long.parseLong(String.valueOf(attribute.getValue()));
+				}
+			} else if (attribute.getValue() instanceof String) {
+				l1 = Long.parseLong((String) attribute.getValue());
+				if (attributes.size() == 2) {
+					attribute = (Attribute) attributes.get(1);
+					l2 = Long.parseLong(String.valueOf(attribute.getValue()));
+				}
+			} else {
+				l1 = (Long) attribute.getValue();
+				if (attributes.size() == 2) {
+					attribute = (Attribute) attributes.get(1);
+					l2 = (Long) attribute.getValue();
+				}
+			}
 			if (attributes.size() == 2) {
-				attribute = (Attribute) attributes.get(1);
-				l2 = Long.parseLong(String.valueOf(attribute.getValue()));
+				// use percent
+				if (l2 == -1)
+					l2 = 0;
+
+				if (l1 == -1)
+					l1 = 0;
+
+				if (fieldType != null) {
+					if (FieldSizeType.MEGABYTES.equals(fieldType)) {
+						l1 = (l1 * 1000000);
+					} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
+						l1 = (l1 * 1000);
+					}
+				}
+
+				if (percentFieldType != null) {
+					if (FieldSizeType.MEGABYTES.equals(percentFieldType)) {
+						l2 = (l2 * 1000000);
+					} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
+						l2 = (l2 * 1000);
+					}
+				}
+
+				long result = percent.multiply(new BigDecimal(l2)).longValue();
+				if (l1 > result) {
+					Attribute attr1 = (Attribute) attributes.get(0);
+					Attribute attr2 = (Attribute) attributes.get(1);
+					return new ThresholdDetail(l1, result, attr1.getName(), percent, attr2.getName(), l2);
+				}
+				return null;
+			} else {
+				// use count
+				if (l1 == -1)
+					l1 = 0;
+
+				if (fieldType != null) {
+					if (FieldSizeType.MEGABYTES.equals(fieldType)) {
+						l1 = (l1 * 1000000);
+					} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
+						l1 = (l1 * 1000);
+					}
+				}
+
+				if (l1 > cnt) {
+					Attribute attr1 = (Attribute) attributes.get(0);
+					return new ThresholdDetail(l1, cnt, attr1.getName());
+				}
 			}
-		} else {
-			l1 = (Long) attribute.getValue();
-			if (attributes.size() == 2) {
-				attribute = (Attribute) attributes.get(1);
-				l2 = (Long) attribute.getValue();
-			}
+		} catch (Exception e) {
+			log(LogType.ERROR.toString(), "ThresholdMonitorTask: ", e.getMessage() 
+					+ " Attribute name=" + attribute.getName() + " value=" + attribute.getValue() , null);
 		}
-		if (attributes.size() == 2) {
-			// use percent
-			if (l2 == -1)
-				l2 = 0;
-
-			if (l1 == -1)
-				l1 = 0;
-
-			if (fieldType != null) {
-				if (FieldSizeType.MEGABYTES.equals(fieldType)) {
-					l1 = (l1 * 1000000);
-				} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
-					l1 = (l1 * 1000);
-				}
-			}
-
-			if (percentFieldType != null) {
-				if (FieldSizeType.MEGABYTES.equals(percentFieldType)) {
-					l2 = (l2 * 1000000);
-				} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
-					l2 = (l2 * 1000);
-				}
-			}
-
-			long result = percent.multiply(new BigDecimal(l2)).longValue();
-			if (l1 > result) {
-				Attribute attr1 = (Attribute) attributes.get(0);
-				Attribute attr2 = (Attribute) attributes.get(1);
-				return new ThresholdDetail(l1, result, attr1.getName(), percent, attr2.getName(), l2);
-			}
-			return null;
-		} else {
-			// use count
-			if (l1 == -1)
-				l1 = 0;
-
-			if (fieldType != null) {
-				if (FieldSizeType.MEGABYTES.equals(fieldType)) {
-					l1 = (l1 * 1000000);
-				} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
-					l1 = (l1 * 1000);
-				}
-			}
-
-			if (l1 > cnt) {
-				Attribute attr1 = (Attribute) attributes.get(0);
-				return new ThresholdDetail(l1, cnt, attr1.getName());
-			}
-			return null;
-		}
+		return null;		
 	}
 
 	/**
@@ -1086,7 +1098,7 @@ public abstract class MonitorImpl implements Monitor {
 							setJmxConnectionActive(false);
 						}
 					}
-					log(LogType.INFO.toString(), "ThresholdMonitorTask: ", e.getMessage(), null);
+					log(LogType.ERROR.toString(), "ThresholdMonitorTask: ", e.getMessage(), null);
 				}
 			}
 		}
@@ -1176,16 +1188,8 @@ public abstract class MonitorImpl implements Monitor {
 		this.distributedLocks[index] = distributedLock;
 	}
 
-	private Logger getApplicationLog() {
-		return applicationLog;
-	}
-
 	private void setApplicationLog(Logger applicationLog) {
 		this.applicationLog = applicationLog;
-	}
-
-	private Logger getExceptionLog() {
-		return exceptionLog;
 	}
 
 	private void setExceptionLog(Logger exceptionLog) {
@@ -1346,6 +1350,14 @@ public abstract class MonitorImpl implements Monitor {
 
 	private int getReconnectRetryAttempts() {
 		return reconnectRetryAttempts;
+	}
+
+	public Logger getApplicationLog() {
+		return applicationLog;
+	}
+
+	public Logger getExceptionLog() {
+		return exceptionLog;
 	}
 
 	public int getCommandPort() {

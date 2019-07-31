@@ -1,5 +1,7 @@
 package util.geode.monitor;
 
+import org.apache.log4j.Logger;
+
 import util.geode.monitor.log.LogMessage;
 import util.geode.monitor.xml.ExcludedMessages;
 
@@ -10,6 +12,8 @@ import util.geode.monitor.xml.ExcludedMessages;
 public interface Monitor {
 	public void sendAlert(LogMessage logMessage);	
 	public int getCommandPort();
+	public Logger getExceptionLog();
+	public Logger getApplicationLog();
 	public void disconnect();
 	public Util getUtil();
 	public void initialize() throws Exception;
