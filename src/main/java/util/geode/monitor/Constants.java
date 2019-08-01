@@ -23,7 +23,7 @@ public class Constants {
 	public static final String CLEAR = "CLEAR";
 	public static final String SEVERE = "SEVERE";
 	public static final String ERROR = "ERROR";
-	public static final String NOT_DEFINED = "NOT DEFINED";
+	public static final String NOT_DEFINED = "Not Defined";
 	public static final String EXCLUDED_MESSAGE_FILE = "excludedMessages.xml";
 	public static final String GEMFIRE_THREAD_FILE = "gemfireThreads.xml";
 	public static final String MXBEAN_FILE = "mxbeans.xml";

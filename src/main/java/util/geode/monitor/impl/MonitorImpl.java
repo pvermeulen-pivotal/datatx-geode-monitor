@@ -69,9 +69,9 @@ public abstract class MonitorImpl implements Monitor {
 	private long messageLifeDuration = 60000 * 15;
 	private long reconnectWaitTime = 60;
 	private String jmxHost;
-	private String site = Constants.NOT_DEFINED;
-	private String environment = Constants.NOT_DEFINED;
-	private String cluster = Constants.NOT_DEFINED;
+	private String site;
+	private String environment;
+	private String cluster;
 	private int messageDuplicateLimit = 3;
 	private int jmxPort = 1099;
 	private int commandPort = 6780;
@@ -540,17 +540,17 @@ public abstract class MonitorImpl implements Monitor {
 		if (getEnvironment() != null && getEnvironment().length() > 0) {
 			sb.append(getEnvironment());
 		} else {
-			sb.append("Environment");
+			sb.append("Environment - " + Constants.NOT_DEFINED);
 		}
 		if (getCluster() != null && getCluster().length() > 0) {
 			sb.append(" | " + getCluster());
 		} else {
-			sb.append(" | Cluster");
+			sb.append(" | Cluster - " + Constants.NOT_DEFINED);
 		}
 		if (getSite() != null && getSite().length() > 0) {
 			sb.append(" | " + getSite());
 		} else {
-			sb.append(" | Site");
+			sb.append(" | Site - " + Constants.NOT_DEFINED);
 		}
 		return sb.toString();
 	}
@@ -1072,10 +1072,10 @@ public abstract class MonitorImpl implements Monitor {
 				}
 			}
 		} catch (Exception e) {
-			log(LogType.ERROR.toString(), "ThresholdMonitorTask: ", e.getMessage() 
-					+ " Attribute name=" + attribute.getName() + " value=" + attribute.getValue() , null);
+			log(LogType.ERROR.toString(), "ThresholdMonitorTask: ",
+					e.getMessage() + " Attribute name=" + attribute.getName() + " value=" + attribute.getValue(), null);
 		}
-		return null;		
+		return null;
 	}
 
 	/**
