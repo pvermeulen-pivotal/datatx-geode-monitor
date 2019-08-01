@@ -85,9 +85,8 @@ public class LogHeader {
 
 	@Override
 	public String toString() {
-		return "LogHeader [severity=" + severity + ", date=" + date
+		return "[severity=" + severity + ", date=" + date
 				+ ", time=" + time + ", zone=" + zone + ", member=" + member
 				+ ", event=" + event + ", tid=" + tid + "]";
 	}
-
 }
