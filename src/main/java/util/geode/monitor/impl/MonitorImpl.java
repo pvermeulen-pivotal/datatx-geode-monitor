@@ -921,6 +921,7 @@ public abstract class MonitorImpl implements Monitor {
 				attributes[0] = field.getFieldName();
 			} else if (field.getPercentageField() != null && StringUtils.isNumeric(field.getPercentageField())) {
 				percentFieldValue = true;
+				attributes[0] = field.getFieldName();
 			} else {
 				attributes[0] = field.getFieldName();
 				attributes[1] = field.getPercentageField();
@@ -997,31 +998,18 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private ThresholdDetail checkThreshold(AttributeList attributes, int count, BigDecimal percent,
 			FieldSizeType fieldType, FieldSizeType percentFieldType) {
-		long l1 = 0;
-		long l2 = 0;
+		double l1 = 0;
+		double l2 = 0;
 		Attribute attribute = null;
 		try {
-			long cnt = Long.parseLong(String.valueOf(count));
+			double cnt = Double.valueOf(String.valueOf(count));
 			attribute = (Attribute) attributes.get(0);
-			if (attribute.getValue() instanceof Integer) {
-				l1 = Long.parseLong(String.valueOf(attribute.getValue()));
-				if (attributes.size() == 2) {
-					attribute = (Attribute) attributes.get(1);
-					l2 = Long.parseLong(String.valueOf(attribute.getValue()));
-				}
-			} else if (attribute.getValue() instanceof String) {
-				l1 = Long.parseLong((String) attribute.getValue());
-				if (attributes.size() == 2) {
-					attribute = (Attribute) attributes.get(1);
-					l2 = Long.parseLong(String.valueOf(attribute.getValue()));
-				}
-			} else {
-				l1 = (Long) attribute.getValue();
-				if (attributes.size() == 2) {
-					attribute = (Attribute) attributes.get(1);
-					l2 = (Long) attribute.getValue();
-				}
+			l1 = Double.valueOf(String.valueOf(attribute.getValue()));
+			if (attributes.size() == 2) {
+				attribute = (Attribute) attributes.get(1);
+				l2 = Double.valueOf(String.valueOf(attribute.getValue()));
 			}
+
 			if (attributes.size() == 2) {
 				// use percent
 				if (l2 == -1)
@@ -1046,7 +1034,7 @@ public abstract class MonitorImpl implements Monitor {
 					}
 				}
 
-				long result = percent.multiply(new BigDecimal(l2)).longValue();
+				double result = percent.multiply(new BigDecimal(l2)).doubleValue();
 				if (l1 > result) {
 					Attribute attr1 = (Attribute) attributes.get(0);
 					Attribute attr2 = (Attribute) attributes.get(1);

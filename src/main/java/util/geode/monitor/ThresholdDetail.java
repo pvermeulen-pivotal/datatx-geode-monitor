@@ -12,23 +12,23 @@ public class ThresholdDetail {
 		COUNT, PERCENT
 	};
 
-	protected long thresholdValue;
-	protected long value;
+	protected double thresholdValue;
+	protected double value;
 	protected String field;
 	protected BigDecimal percentage;
 	protected String percentageField;
-	protected long percentageValue;
+	protected double percentageValue;
 	protected DetailType type;
 
-	public ThresholdDetail(long value, long thresholdValue, String field) {
+	public ThresholdDetail(double value, double thresholdValue, String field) {
 		this.value = value;
 		this.thresholdValue = thresholdValue;
 		this.field = field;
 		this.type = DetailType.COUNT;
 	}
 
-	public ThresholdDetail(long value, long thresholdValue, String field,
-			BigDecimal percentage, String percentageField, long percentageValue) {
+	public ThresholdDetail(double value, double thresholdValue, String field,
+			BigDecimal percentage, String percentageField, double percentageValue) {
 		this.value = value;
 		this.thresholdValue = thresholdValue;
 		this.field = field;
@@ -38,11 +38,11 @@ public class ThresholdDetail {
 		this.type = DetailType.PERCENT;
 	}
 
-	public long getThresholdValue() {
+	public double getThresholdValue() {
 		return thresholdValue;
 	}
 
-	public long getValue() {
+	public double getValue() {
 		return value;
 	}
 
@@ -58,7 +58,7 @@ public class ThresholdDetail {
 		return percentageField;
 	}
 
-	public long getPercentageValue() {
+	public double getPercentageValue() {
 		return percentageValue;
 	}
 
