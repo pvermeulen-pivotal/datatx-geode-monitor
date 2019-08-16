@@ -8,7 +8,6 @@ import javax.management.AttributeList;
 import javax.management.MBeanServerConnection;
 import javax.management.Notification;
 import javax.management.ObjectName;
-import javax.sql.rowset.CachedRowSet;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -38,8 +37,7 @@ public class Util {
 					.unmarshal(ClassLoader.getSystemResourceAsStream(fileName));
 			return unmarshalledObject.getValue();
 		} catch (JAXBException e) {
-			throw new RuntimeException("Error unmarshalling " + fileName + ": "
-					+ e.getMessage());
+			throw new RuntimeException("Error unmarshalling " + fileName + ": " + e.getMessage());
 		}
 	}
 
@@ -60,42 +58,31 @@ public class Util {
 		header.setZone(zf.format(notification.getTimeStamp()));
 
 		if (notification.getUserData() != null) {
-			Map<String, String> userData = (Map<String, String>) notification
-					.getUserData();
+			Map<String, String> userData = (Map<String, String>) notification.getUserData();
 			Set<String> entries = userData.keySet();
 			for (String entry : entries) {
-				if (Constants.ALERT_LEVEL.toUpperCase().equals(
-						entry.toUpperCase())) {
-					if (userData.get(entry).toUpperCase()
-							.equals(Constants.SEVERE)) {
+				if (Constants.ALERT_LEVEL.toUpperCase().equals(entry.toUpperCase())) {
+					if (userData.get(entry).toUpperCase().equals(Constants.SEVERE)) {
 						header.setSeverity(Constants.CRITICAL);
-					} else if (userData.get(entry).toUpperCase()
-							.equals(Constants.ERROR)) {
+					} else if (userData.get(entry).toUpperCase().equals(Constants.ERROR)) {
 						header.setSeverity(Constants.MAJOR);
-					} else if (userData.get(entry).toUpperCase()
-							.equals(Constants.WARNING)) {
+					} else if (userData.get(entry).toUpperCase().equals(Constants.WARNING)) {
 						header.setSeverity(Constants.WARNING);
 					}
-				} else if (Constants.THREAD.toUpperCase().equals(
-						entry.toUpperCase())) {
+				} else if (Constants.THREAD.toUpperCase().equals(entry.toUpperCase())) {
 					header.setEvent(userData.get(entry));
-				} else if (Constants.TID.toUpperCase().equals(
-						entry.toUpperCase())) {
+				} else if (Constants.TID.toUpperCase().equals(entry.toUpperCase())) {
 					header.setTid(userData.get(entry));
-				} else if (Constants.MEMBER.toUpperCase().equals(
-						entry.toUpperCase())) {
+				} else if (Constants.MEMBER.toUpperCase().equals(entry.toUpperCase())) {
 					header.setMember(userData.get(entry));
 				}
 			}
 			if (header.getTid() == null) {
 				if (header.getEvent() != null) {
 					if (header.getEvent().toUpperCase().contains("TID=")) {
-						int offset = header.getEvent().toUpperCase()
-								.indexOf("TID=");
-						header.setTid(header.getEvent().substring(offset)
-								.trim());
-						header.setEvent(header.getEvent().substring(0,
-								offset - 1));
+						int offset = header.getEvent().toUpperCase().indexOf("TID=");
+						header.setTid(header.getEvent().substring(offset).trim());
+						header.setEvent(header.getEvent().substring(0, offset - 1));
 					}
 				}
 			}
@@ -135,8 +122,7 @@ public class Util {
 	 * @param message
 	 * @return
 	 */
-	public boolean validateCriteria(LogMessage logMessage,
-			ExcludedMessage message) {
+	public boolean validateCriteria(LogMessage logMessage, ExcludedMessage message) {
 		boolean result = true;
 		int count = 0;
 		for (String criteria : message.getCriteria()) {
@@ -148,111 +134,80 @@ public class Util {
 		return result;
 	}
 
-	@SuppressWarnings("incomplete-switch")
-	public ObjectName[] getObjectNames(MBeanServerConnection mbs,
-			ObjectName objectName, Constants.ObjectNameType type)
+	public ObjectName[] getObjectNames(MBeanServerConnection mbs, ObjectName objectName, Constants.ObjectNameType type)
 			throws Exception {
 		switch (type) {
 		case CACHE_SERVERS:
-			return (ObjectName[]) mbs.invoke(objectName,
-					Constants.LIST_CACHE_SERVERS_OBJECTS, null, null);
+			return (ObjectName[]) mbs.invoke(objectName, Constants.LIST_CACHE_SERVERS_OBJECTS, null, null);
 		case GATEWAY_RECEIVERS:
-			return (ObjectName[]) mbs.invoke(objectName,
-					Constants.LIST_GATEWAY_RECEIVERS_OBJECTS, null, null);
+			return (ObjectName[]) mbs.invoke(objectName, Constants.LIST_GATEWAY_RECEIVERS_OBJECTS, null, null);
 		case GATEWAY_SENDERS:
-			return (ObjectName[]) mbs.invoke(objectName,
-					Constants.LIST_GATEWAY_SENDERS_OBJECTS, null, null);
+			return (ObjectName[]) mbs.invoke(objectName, Constants.LIST_GATEWAY_SENDERS_OBJECTS, null, null);
+		default:
+			break;
 		}
 		return null;
 	}
 
-	public String[] getNames(MBeanServerConnection mbs, ObjectName objectName,
-			Constants.ListType type) throws Exception  {
+	public String[] getNames(MBeanServerConnection mbs, ObjectName objectName, Constants.ListType type)
+			throws Exception {
 		switch (type) {
 		case MEMBERS:
-			return (String[]) mbs.invoke(objectName,
-					Constants.LIST_MEMBER_NAMES, null, null);
+			return (String[]) mbs.invoke(objectName, Constants.LIST_MEMBER_NAMES, null, null);
 		case SERVERS:
-			return (String[]) mbs.invoke(objectName,
-					Constants.LIST_SERVER_NAMES, null, null);
+			return (String[]) mbs.invoke(objectName, Constants.LIST_SERVER_NAMES, null, null);
 		case LOCATORS:
-			return (String[]) mbs.invoke(objectName,
-					Constants.LIST_LOCATOR_NAMES, new Object[] { true },
+			return (String[]) mbs.invoke(objectName, Constants.LIST_LOCATOR_NAMES, new Object[] { true },
 					new String[] { "boolean" });
 		case REGIONS:
-			return (String[]) mbs.invoke(objectName,
-					Constants.LIST_REGION_NAMES, null, null);
+			return (String[]) mbs.invoke(objectName, Constants.LIST_REGION_NAMES, null, null);
 		case REGION_PATHS:
-			return (String[]) mbs.invoke(objectName,
-					Constants.LIST_REGION_PATH_NAMES, null, null);
+			return (String[]) mbs.invoke(objectName, Constants.LIST_REGION_PATH_NAMES, null, null);
 		case GROUPS:
-			return (String[]) mbs.invoke(objectName,
-					Constants.LIST_GROUP_NAMES, null, null);
+			return (String[]) mbs.invoke(objectName, Constants.LIST_GROUP_NAMES, null, null);
 		case SENDERS:
-			return (String[]) mbs.invoke(objectName,
-					Constants.LIST_SENDER_NAMES, null, null);
+			return (String[]) mbs.invoke(objectName, Constants.LIST_SENDER_NAMES, null, null);
 		case RECEIVERS:
-			return (String[]) mbs.invoke(objectName,
-					Constants.LIST_RECEIVER_NAMES, null, null);
-		}			
+			return (String[]) mbs.invoke(objectName, Constants.LIST_RECEIVER_NAMES, null, null);
+		}
 		return null;
 	}
 
 	@SuppressWarnings("incomplete-switch")
-	public ObjectName getObjectName(MBeanServerConnection mbs,
-			ObjectName objectName, Constants.ObjectNameType type, String name,
-			String name1) throws Exception {
+	public ObjectName getObjectName(MBeanServerConnection mbs, ObjectName objectName, Constants.ObjectNameType type,
+			String name, String name1) throws Exception {
 		switch (type) {
 		case MEMBER:
-			return (ObjectName) mbs.invoke(objectName,
-					Constants.FETCH_MEMBER_NAME_OBJECT, new Object[] { name },
+			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_MEMBER_NAME_OBJECT, new Object[] { name },
 					new String[] { String.class.getName() });
 		case DISK_STORE:
-			return (ObjectName) mbs.invoke(objectName,
-					Constants.FETCH_DISK_STORE_OBJECT, new Object[] { name,
-							name1 }, new String[] { String.class.getName(),
-							String.class.getName() });
+			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_DISK_STORE_OBJECT, new Object[] { name, name1 },
+					new String[] { String.class.getName(), String.class.getName() });
 		case LOCK_DIST:
-			return (ObjectName) mbs.invoke(objectName,
-					Constants.FETCH_DISTRIBUTED_LOCK_OBJECT,
-					new Object[] { name },
+			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_DISTRIBUTED_LOCK_OBJECT, new Object[] { name },
 					new String[] { String.class.getName() });
 		case LOCK:
-			return (ObjectName) mbs.invoke(
-					objectName,
-					Constants.FETCH_LOCK_OBJECT,
-					new Object[] { name, name1 },
-					new String[] { String.class.getName(),
-							String.class.getName() });
+			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_LOCK_OBJECT, new Object[] { name, name1 },
+					new String[] { String.class.getName(), String.class.getName() });
 		case REGION_DIST:
-			return (ObjectName) mbs.invoke(objectName,
-					Constants.FETCH_DISTRIBUTED_REGION_OBJECT,
-					new Object[] { name },
+			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_DISTRIBUTED_REGION_OBJECT, new Object[] { name },
 					new String[] { String.class.getName() });
 		case REGION:
-			return (ObjectName) mbs.invoke(
-					objectName,
-					Constants.FETCH_REGION_OBJECT,
-					new Object[] { name, name1 },
-					new String[] { String.class.getName(),
-							String.class.getName() });
+			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_REGION_OBJECT, new Object[] { name, name1 },
+					new String[] { String.class.getName(), String.class.getName() });
 		case GATEWAY_RECEIVERS:
-			return (ObjectName) mbs.invoke(objectName,
-					Constants.FETCH_GATEWAY_RECEIVER_OBJECT,
-					new Object[] { name },
+			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_GATEWAY_RECEIVER_OBJECT, new Object[] { name },
 					new String[] { String.class.getName() });
 
 		case GATEWAY_SENDERS:
-			return (ObjectName) mbs.invoke(objectName,
-					Constants.FETCH_GATEWAY_SENDER_OBJECT, new Object[] { name,
-							name1 }, new String[] { String.class.getName(),
-							String.class.getName() });
+			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_GATEWAY_SENDER_OBJECT,
+					new Object[] { name, name1 }, new String[] { String.class.getName(), String.class.getName() });
 		}
 		return null;
 	}
 
-	public AttributeList getAttributes(MBeanServerConnection mbs,
-			ObjectName objectName, String[] attributes) throws Exception {
+	public AttributeList getAttributes(MBeanServerConnection mbs, ObjectName objectName, String[] attributes)
+			throws Exception {
 		return mbs.getAttributes(objectName, attributes);
 	}
 }
