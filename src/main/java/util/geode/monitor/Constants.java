@@ -11,7 +11,7 @@ public class Constants {
 	};
 
 	public static enum ListType {
-		MEMBERS, SERVERS, LOCATORS, REGIONS, REGION_PATHS, GROUPS
+		MEMBERS, SERVERS, LOCATORS, REGIONS, REGION_PATHS, GROUPS, SENDERS, RECEIVERS
 	}
 
 	public static enum ObjectNameType { MEMBER, CACHE_SERVERS, GATEWAY_RECEIVERS, GATEWAY_SENDERS,
@@ -93,6 +93,8 @@ public class Constants {
 	public static final String LIST_REGION_NAMES="listRegions";
 	public static final String LIST_REGION_PATH_NAMES="listAllRegionPaths";
 	public static final String LIST_GROUP_NAMES="listGroups";
+	public static final String LIST_SENDER_NAMES="listGatewaySenders";
+	public static final String LIST_RECEIVER_NAMES="listGatewayReceivers";
 	public static final String FETCH_MEMBER_NAME_OBJECT="fetchMemberObjectName";
 	public static final String FETCH_DISK_STORE_OBJECT="fetchDiskStoreObjectName";
 	public static final String FETCH_DISTRIBUTED_LOCK_OBJECT="fetchDistributedLockServiceObjectName";

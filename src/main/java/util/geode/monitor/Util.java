@@ -8,6 +8,7 @@ import javax.management.AttributeList;
 import javax.management.MBeanServerConnection;
 import javax.management.Notification;
 import javax.management.ObjectName;
+import javax.sql.rowset.CachedRowSet;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -187,7 +188,13 @@ public class Util {
 		case GROUPS:
 			return (String[]) mbs.invoke(objectName,
 					Constants.LIST_GROUP_NAMES, null, null);
-		}
+		case SENDERS:
+			return (String[]) mbs.invoke(objectName,
+					Constants.LIST_SENDER_NAMES, null, null);
+		case RECEIVERS:
+			return (String[]) mbs.invoke(objectName,
+					Constants.LIST_RECEIVER_NAMES, null, null);
+		}			
 		return null;
 	}
 
