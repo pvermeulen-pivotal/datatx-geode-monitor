@@ -234,31 +234,35 @@ public abstract class MonitorImpl implements Monitor {
 
 		setCacheServers(getUtil().getObjectNames(mbs, systemName, Constants.ObjectNameType.CACHE_SERVERS));
 
-		for (MxBean mxBean : getMxBeans().getMxBean()) {
-			j = 0;
-			switch (mxBean.getMxBeanName()) {
-			case DISTRIBUTED_REGION_MX_BEAN:
-				setDistributedRegions(new ObjectName[mxBean.getFields().getField().size()]);
-				for (MxBeans.MxBean.Fields.Field field : mxBean.getFields().getField()) {
-					setDistributedRegion(getUtil().getObjectName(mbs, systemName, Constants.ObjectNameType.REGION_DIST,
-							field.getBeanProperty(), null), j);
-					j++;
+		if (getMxBeans() != null) {
+			for (MxBean mxBean : getMxBeans().getMxBean()) {
+				j = 0;
+				switch (mxBean.getMxBeanName()) {
+				case DISTRIBUTED_REGION_MX_BEAN:
+					setDistributedRegions(new ObjectName[mxBean.getFields().getField().size()]);
+					for (MxBeans.MxBean.Fields.Field field : mxBean.getFields().getField()) {
+						setDistributedRegion(getUtil().getObjectName(mbs, systemName,
+								Constants.ObjectNameType.REGION_DIST, field.getBeanProperty(), null), j);
+						j++;
+					}
+					break;
+				case DISTRIBUTED_LOCK_SERVICE_MX_BEAN:
+					setDistributedLocks(new ObjectName[mxBean.getFields().getField().size()]);
+					for (MxBeans.MxBean.Fields.Field field : mxBean.getFields().getField()) {
+						setDistributedLock(getUtil().getObjectName(mbs, systemName, Constants.ObjectNameType.LOCK_DIST,
+								field.getBeanProperty(), null), j);
+						j++;
+					}
+					break;
 				}
-				break;
-			case DISTRIBUTED_LOCK_SERVICE_MX_BEAN:
-				setDistributedLocks(new ObjectName[mxBean.getFields().getField().size()]);
-				for (MxBeans.MxBean.Fields.Field field : mxBean.getFields().getField()) {
-					setDistributedLock(getUtil().getObjectName(mbs, systemName, Constants.ObjectNameType.LOCK_DIST,
-							field.getBeanProperty(), null), j);
-					j++;
-				}
-				break;
 			}
 		}
 		getJMXDetails();
 
-		thresholdThread = new Thread(new ThresholdMonitorTask(), "Threshold Monitor");
-		thresholdThread.start();
+		if (getMxBeans() != null) {
+			thresholdThread = new Thread(new ThresholdMonitorTask(), "Threshold Monitor");
+			thresholdThread.start();
+		}
 
 		if (isHealthCheck()) {
 			healthCheckThread = new Thread(new HealthCheckTask(), "Health Check");
@@ -283,8 +287,10 @@ public abstract class MonitorImpl implements Monitor {
 			log(LogType.ERROR.toString(), "Internal", "(disconnect) " + e.getMessage(), null);
 		}
 
-		if (thresholdThread.isAlive()) {
-			thresholdThread.interrupt();
+		if (getMxBeans() != null) {
+			if (thresholdThread.isAlive()) {
+				thresholdThread.interrupt();
+			}
 		}
 
 		if (isHealthCheck()) {
