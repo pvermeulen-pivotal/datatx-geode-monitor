@@ -1,6 +1,7 @@
 package util.geode.monitor;
 
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,10 +9,13 @@ import javax.management.AttributeList;
 import javax.management.MBeanServerConnection;
 import javax.management.Notification;
 import javax.management.ObjectName;
+import javax.management.openmbean.CompositeDataSupport;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+
+import org.apache.log4j.Logger;
 
 import util.geode.monitor.log.LogHeader;
 import util.geode.monitor.log.LogMessage;
@@ -22,6 +26,19 @@ import util.geode.monitor.xml.ExcludedMessage;
  *
  */
 public class Util {
+
+	public LogMessage buildSpecialLogMessage(String message, String level, long timeStamp, String member) {
+		SimpleDateFormat df = new SimpleDateFormat(Constants.DATE_FORMAT);
+		SimpleDateFormat tf = new SimpleDateFormat(Constants.TIME_FORMAT);
+		SimpleDateFormat zf = new SimpleDateFormat(Constants.ZONE_FORMAT);
+
+		LogHeader header = new LogHeader(level, df.format(timeStamp), tf.format(timeStamp), zf.format(timeStamp),
+				member, null, null);
+
+		LogMessage logMessage = new LogMessage(header, message);
+		logMessage.setEvent(null);
+		return logMessage;
+	}
 
 	/**
 	 * unmarshall xml to object
@@ -134,15 +151,70 @@ public class Util {
 		return result;
 	}
 
+	/**
+	 * Creates the environment, cluster and site names if defined otherwise use
+	 * default names
+	 * 
+	 * @return environment, cluster and site names
+	 */
+	public String getLoggingHeader(String cluster, String site, String environment) {
+		StringBuilder sb = new StringBuilder();
+		if (environment != null && environment.length() > 0) {
+			sb.append(environment);
+		} else {
+			sb.append(" ");
+		}
+		if (cluster != null && cluster.length() > 0) {
+			sb.append(" | " + cluster);
+		} else {
+			sb.append(" | ");
+		}
+		if (site != null && site.length() > 0) {
+			sb.append(" | " + site);
+		} else {
+			sb.append(" | ");
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Log a message to the application log file
+	 * 
+	 * @param logType
+	 * @param member
+	 * @param message
+	 * @param user
+	 */
+	public void log(Logger log, String logType, String member, String message, Object user, String cluster,
+			String site, String environment) {
+		Object userData = "";
+		String memberData = "";
+		if (user != null)
+			userData = user;
+		if (member != null)
+			memberData = member;
+		StringBuilder str = new StringBuilder();
+		SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_TIME_FORMAT);
+		String dt = sdf.format(new Date());
+		str.append(getLoggingHeader(cluster, site, environment));
+		str.append(" | " + dt);
+		str.append(" | " + logType);
+		str.append(" | " + memberData);
+		log.info(str.toString() + " | " + message + " " + userData);
+	}
+
 	public ObjectName[] getObjectNames(MBeanServerConnection mbs, ObjectName objectName, Constants.ObjectNameType type)
 			throws Exception {
 		switch (type) {
 		case CACHE_SERVERS:
-			return (ObjectName[]) mbs.invoke(objectName, Constants.LIST_CACHE_SERVERS_OBJECTS, null, null);
+			return (ObjectName[]) invokeGetObjectNameArray(mbs, objectName, Constants.LIST_CACHE_SERVERS_OBJECTS, null,
+					null);
 		case GATEWAY_RECEIVERS:
-			return (ObjectName[]) mbs.invoke(objectName, Constants.LIST_GATEWAY_RECEIVERS_OBJECTS, null, null);
+			return (ObjectName[]) invokeGetObjectNameArray(mbs, objectName, Constants.LIST_GATEWAY_RECEIVERS_OBJECTS,
+					null, null);
 		case GATEWAY_SENDERS:
-			return (ObjectName[]) mbs.invoke(objectName, Constants.LIST_GATEWAY_SENDERS_OBJECTS, null, null);
+			return (ObjectName[]) invokeGetObjectNameArray(mbs, objectName, Constants.LIST_GATEWAY_SENDERS_OBJECTS,
+					null, null);
 		default:
 			break;
 		}
@@ -153,22 +225,22 @@ public class Util {
 			throws Exception {
 		switch (type) {
 		case MEMBERS:
-			return (String[]) mbs.invoke(objectName, Constants.LIST_MEMBER_NAMES, null, null);
+			return (String[]) invokeGetStringArray(mbs, objectName, Constants.LIST_MEMBER_NAMES, null, null);
 		case SERVERS:
-			return (String[]) mbs.invoke(objectName, Constants.LIST_SERVER_NAMES, null, null);
+			return (String[]) invokeGetStringArray(mbs, objectName, Constants.LIST_SERVER_NAMES, null, null);
 		case LOCATORS:
-			return (String[]) mbs.invoke(objectName, Constants.LIST_LOCATOR_NAMES, new Object[] { true },
+			return (String[]) invokeGetStringArray(mbs, objectName, Constants.LIST_LOCATOR_NAMES, new Object[] { true },
 					new String[] { "boolean" });
 		case REGIONS:
-			return (String[]) mbs.invoke(objectName, Constants.LIST_REGION_NAMES, null, null);
+			return (String[]) invokeGetStringArray(mbs, objectName, Constants.LIST_REGION_NAMES, null, null);
 		case REGION_PATHS:
-			return (String[]) mbs.invoke(objectName, Constants.LIST_REGION_PATH_NAMES, null, null);
+			return (String[]) invokeGetStringArray(mbs, objectName, Constants.LIST_REGION_PATH_NAMES, null, null);
 		case GROUPS:
-			return (String[]) mbs.invoke(objectName, Constants.LIST_GROUP_NAMES, null, null);
+			return (String[]) invokeGetStringArray(mbs, objectName, Constants.LIST_GROUP_NAMES, null, null);
 		case SENDERS:
-			return (String[]) mbs.invoke(objectName, Constants.LIST_SENDER_NAMES, null, null);
+			return (String[]) invokeGetStringArray(mbs, objectName, Constants.LIST_SENDER_NAMES, null, null);
 		case RECEIVERS:
-			return (String[]) mbs.invoke(objectName, Constants.LIST_RECEIVER_NAMES, null, null);
+			return (String[]) invokeGetStringArray(mbs, objectName, Constants.LIST_RECEIVER_NAMES, null, null);
 		}
 		return null;
 	}
@@ -178,36 +250,65 @@ public class Util {
 			String name, String name1) throws Exception {
 		switch (type) {
 		case MEMBER:
-			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_MEMBER_NAME_OBJECT, new Object[] { name },
-					new String[] { String.class.getName() });
+			return (ObjectName) invokeGetObjectName(mbs, objectName, Constants.FETCH_MEMBER_NAME_OBJECT,
+					new Object[] { name }, new String[] { String.class.getName() });
 		case DISK_STORE:
-			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_DISK_STORE_OBJECT, new Object[] { name, name1 },
-					new String[] { String.class.getName(), String.class.getName() });
+			return (ObjectName) invokeGetObjectName(mbs, objectName, Constants.FETCH_DISK_STORE_OBJECT,
+					new Object[] { name, name1 }, new String[] { String.class.getName(), String.class.getName() });
 		case LOCK_DIST:
-			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_DISTRIBUTED_LOCK_OBJECT, new Object[] { name },
-					new String[] { String.class.getName() });
+			return (ObjectName) invokeGetObjectName(mbs, objectName, Constants.FETCH_DISTRIBUTED_LOCK_OBJECT,
+					new Object[] { name }, new String[] { String.class.getName() });
 		case LOCK:
-			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_LOCK_OBJECT, new Object[] { name, name1 },
-					new String[] { String.class.getName(), String.class.getName() });
+			return (ObjectName) invokeGetObjectName(mbs, objectName, Constants.FETCH_LOCK_OBJECT,
+					new Object[] { name, name1 }, new String[] { String.class.getName(), String.class.getName() });
 		case REGION_DIST:
-			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_DISTRIBUTED_REGION_OBJECT, new Object[] { name },
-					new String[] { String.class.getName() });
+			return (ObjectName) invokeGetObjectName(mbs, objectName, Constants.FETCH_DISTRIBUTED_REGION_OBJECT,
+					new Object[] { name }, new String[] { String.class.getName() });
 		case REGION:
-			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_REGION_OBJECT, new Object[] { name, name1 },
-					new String[] { String.class.getName(), String.class.getName() });
+			return (ObjectName) invokeGetObjectName(mbs, objectName, Constants.FETCH_REGION_OBJECT,
+					new Object[] { name, name1 }, new String[] { String.class.getName(), String.class.getName() });
 		case GATEWAY_RECEIVERS:
-			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_GATEWAY_RECEIVER_OBJECT, new Object[] { name },
-					new String[] { String.class.getName() });
-
+			return (ObjectName) invokeGetObjectName(mbs, objectName, Constants.FETCH_GATEWAY_RECEIVER_OBJECT,
+					new Object[] { name }, new String[] { String.class.getName() });
 		case GATEWAY_SENDERS:
-			return (ObjectName) mbs.invoke(objectName, Constants.FETCH_GATEWAY_SENDER_OBJECT,
+			return (ObjectName) invokeGetObjectName(mbs, objectName, Constants.FETCH_GATEWAY_SENDER_OBJECT,
 					new Object[] { name, name1 }, new String[] { String.class.getName(), String.class.getName() });
 		}
 		return null;
 	}
 
-	public AttributeList getAttributes(MBeanServerConnection mbs, ObjectName objectName, String[] attributes)
-			throws Exception {
+	public synchronized ObjectName invokeGetObjectName(MBeanServerConnection mbs, ObjectName objectName, String name,
+			Object[] params, String[] paramsClasses) throws Exception {
+		return (ObjectName) mbs.invoke(objectName, name, params, paramsClasses);
+	}
+
+	public synchronized ObjectName[] invokeGetObjectNameArray(MBeanServerConnection mbs, ObjectName objectName,
+			String name, Object[] params, String[] paramsClasses) throws Exception {
+		return (ObjectName[]) mbs.invoke(objectName, name, params, paramsClasses);
+	}
+
+	public synchronized String[] invokeGetStringArray(MBeanServerConnection mbs, ObjectName objectName, String name,
+			Object[] params, String[] paramsClasses) throws Exception {
+		return (String[]) mbs.invoke(objectName, name, params, paramsClasses);
+	}
+
+	public synchronized String invokeGetString(MBeanServerConnection mbs, ObjectName objectName, String name,
+			Object[] params, String[] paramsClasses) throws Exception {
+		return (String) mbs.invoke(objectName, name, params, paramsClasses);
+	}
+
+	public synchronized CompositeDataSupport invokeGetComposite(MBeanServerConnection mbs, ObjectName objectName,
+			String name, Object[] params, String[] paramsClasses) throws Exception {
+		return (CompositeDataSupport) mbs.invoke(objectName, name, params, paramsClasses);
+	}
+
+	public synchronized void invokePutValue(MBeanServerConnection mbs, ObjectName objectName, String name,
+			Object[] params, String[] paramsClasses) throws Exception {
+		mbs.invoke(objectName, name, params, paramsClasses);
+	}
+
+	public synchronized AttributeList getAttributes(MBeanServerConnection mbs, ObjectName objectName,
+			String[] attributes) throws Exception {
 		return mbs.getAttributes(objectName, attributes);
 	}
 }

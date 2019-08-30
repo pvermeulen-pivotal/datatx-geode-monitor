@@ -21,8 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
-//import org.apache.commons.lang3.StringUtils;
-
 import util.geode.monitor.Constants;
 import util.geode.monitor.Constants.ListType;
 import util.geode.monitor.Constants.LogType;
@@ -31,7 +29,6 @@ import util.geode.monitor.Monitor;
 import util.geode.monitor.ThresholdDetail;
 import util.geode.monitor.ThresholdDetail.DetailType;
 import util.geode.monitor.Util;
-import util.geode.monitor.log.LogHeader;
 import util.geode.monitor.log.LogMessage;
 import util.geode.monitor.xml.ExcludedMessage;
 import util.geode.monitor.xml.ExcludedMessageObjectFactory;
@@ -68,29 +65,30 @@ public abstract class MonitorImpl implements Monitor {
 	private ScheduledFuture<AgentMonitorTask> agentStartTimer;
 	private long messageLifeDuration = 60000 * 15;
 	private long reconnectWaitTime = 60;
+	private long healthCheckInterval = (10 * 60) * 1000;
 	private String jmxHost;
 	private String site;
 	private String environment;
 	private String cluster;
+	private String lastJmxHost = "";
+	private String[] blockers;
+	private String[] servers;
 	private int messageDuplicateLimit = 3;
 	private int jmxPort = 1099;
 	private int commandPort = 6780;
 	private int reconnectRetryAttempts = 5;
 	private int reconnectRetryCount = 0;
+	private int nextHostIndex;
 	private boolean shutdown = false;
-	private String[] servers;
+	private boolean healthCheck = false;
 	private ObjectName[] members;
 	private ObjectName[] cacheServers;
 	private ObjectName[] distributedRegions;
 	private ObjectName[] distributedLocks;
 	private List<String> jmxHosts = new ArrayList<String>();
-	private int nextHostIndex;
-	private String lastJmxHost = "";
 	private JMXServiceURL url = null;
-	private String[] blockers;
-
-	public MonitorImpl() {
-	}
+	private Thread thresholdThread;
+	private Thread healthCheckThread;
 
 	/**
 	 * Checks to see if the jmx connection is still valid
@@ -119,7 +117,6 @@ public abstract class MonitorImpl implements Monitor {
 	 * 
 	 * @throws Exception
 	 */
-	@SuppressWarnings("unchecked")
 	public void initialize() throws Exception {
 		loadMonitorProps();
 		createLogAppender();
@@ -129,7 +126,18 @@ public abstract class MonitorImpl implements Monitor {
 				JAXBContext.newInstance(ExcludedMessageObjectFactory.class), Constants.EXCLUDED_MESSAGE_FILE));
 		setMxBeans((MxBeans) getUtil().processJAXB(JAXBContext.newInstance(MxBeansObjectFactory.class),
 				Constants.MXBEAN_FILE));
+	}
 
+	/**
+	 * Start the health and threshold monitor
+	 * 
+	 * Connect to locator JMX server
+	 * 
+	 * schedule agent start timer thread
+	 * 
+	 */
+	@SuppressWarnings("unchecked")
+	public void start() {
 		if (!connect()) {
 			if (getAgentStartTimer() == null) {
 				setAgentStartTimer((ScheduledFuture<AgentMonitorTask>) getScheduleExecutor()
@@ -188,10 +196,10 @@ public abstract class MonitorImpl implements Monitor {
 				break;
 			} catch (IOException e) {
 				log(LogType.ERROR.toString(), getJmxHost(),
-						"JMX Manager not running for URL: " + getUrl() + " " + e.getMessage(), null);
+						"(connect) JMX Manager not running for URL: " + getUrl() + " " + e.getMessage(), null);
 				connection = false;
 			} catch (Exception e) {
-				log(LogType.ERROR.toString(), getJmxHost(), e.getMessage(), null);
+				log(LogType.ERROR.toString(), getJmxHost(), "(connect) " + e.getMessage(), null);
 				connection = false;
 			}
 		}
@@ -248,8 +256,14 @@ public abstract class MonitorImpl implements Monitor {
 			}
 		}
 		getJMXDetails();
-		Thread thread = new Thread(new ThresholdMonitorTask());
-		thread.start();
+
+		thresholdThread = new Thread(new ThresholdMonitorTask(), "Threshold Monitor");
+		thresholdThread.start();
+
+		if (isHealthCheck()) {
+			healthCheckThread = new Thread(new HealthCheckTask(), "Health Check");
+			healthCheckThread.start();
+		}
 	}
 
 	/**
@@ -259,14 +273,24 @@ public abstract class MonitorImpl implements Monitor {
 		try {
 			getMbs().removeNotificationListener(getSystemName(), getMbsListener());
 		} catch (Exception e) {
-			log(LogType.ERROR.toString(), "Internal", e.getMessage(), null);
+			log(LogType.ERROR.toString(), "Internal", "(disconnect) " + e.getMessage(), null);
 		}
 
 		try {
 			getJmxConnection().removeConnectionNotificationListener(getConnectionListener());
 			getJmxConnection().close();
 		} catch (Exception e) {
-			log(LogType.ERROR.toString(), "Internal", e.getMessage(), null);
+			log(LogType.ERROR.toString(), "Internal", "(disconnect) " + e.getMessage(), null);
+		}
+
+		if (thresholdThread.isAlive()) {
+			thresholdThread.interrupt();
+		}
+
+		if (isHealthCheck()) {
+			if (healthCheckThread.isAlive()) {
+				healthCheckThread.interrupt();
+			}
 		}
 	}
 
@@ -287,7 +311,8 @@ public abstract class MonitorImpl implements Monitor {
 					if (notification.getType().equals(Constants.M_JMX_CLOSED)
 							|| notification.getType().equals(Constants.M_JMX_FAILED)
 							|| notification.getType().equals(Constants.M_JMX_LOST)) {
-						log(LogType.ERROR.toString(), notification.getSource().toString(), notification.getMessage(),
+						log(LogType.ERROR.toString(), notification.getSource().toString(),
+								"(handleConnectionNotification) " + notification.getMessage(),
 								notification.getUserData());
 
 						if (!shutdown) {
@@ -320,8 +345,10 @@ public abstract class MonitorImpl implements Monitor {
 									"Monitor");
 						}
 					} else if (notification.getType().equals(Constants.M_JMX_OPENED)) {
-						createNotification(LogType.INFO.toString(), notification,
-								notification.getSource() + " : " + Constants.M_JMX_MGR_OPENED, Constants.CLEAR);
+						createNotification(
+								LogType.INFO.toString(), notification, "(handleConnectionNotification) "
+										+ notification.getSource() + " : " + Constants.M_JMX_MGR_OPENED,
+								Constants.CLEAR);
 					}
 					return;
 				}
@@ -345,24 +372,31 @@ public abstract class MonitorImpl implements Monitor {
 				if (isAttachedToManager()) {
 					if (Constants.JOINED.equals(notification.getType())) {
 						if (!isBlocked((String) notification.getSource())) {
-							createNotification(LogType.INFO.toString(), notification,
-									notification.getSource() + " : " + Constants.M_MEMBER_JOINED, Constants.CLEAR);
+							createNotification(
+									LogType.INFO.toString(), notification, "(handleNotification) "
+											+ notification.getSource() + " : " + Constants.M_MEMBER_JOINED,
+									Constants.CLEAR);
 						}
 					} else if (Constants.LEFT.equals(notification.getType())) {
 						if (!isBlocked((String) notification.getSource())) {
-							createNotification(LogType.ERROR.toString(), notification,
-									notification.getSource() + " : " + Constants.M_MEMBER_LEFT, Constants.MAJOR);
+							createNotification(
+									LogType.ERROR.toString(), notification, "(handleNotification) "
+											+ notification.getSource() + " : " + Constants.M_MEMBER_LEFT,
+									Constants.MAJOR);
 						}
 					} else if (Constants.CRASHED.equals(notification.getType())) {
 						if (!isBlocked((String) notification.getSource())) {
-							createNotification(LogType.ERROR.toString(), notification,
-									notification.getSource() + " : " + Constants.M_MEMBER_CRASH, Constants.CRITICAL);
+							createNotification(
+									LogType.ERROR.toString(), notification, "(handleNotification) "
+											+ notification.getSource() + " : " + Constants.M_MEMBER_CRASH,
+									Constants.CRITICAL);
 						}
 					} else if (Constants.SUSPECT.equals(notification.getType())) {
 						if (!notification.getMessage().contains("By")) {
 							if (!isBlocked((String) notification.getSource())) {
-								createNotification(LogType.ERROR.toString(), notification,
-										notification.getSource() + " : " + Constants.M_MEMBER_SUSPECT,
+								createNotification(
+										LogType.ERROR.toString(), notification, "(handleNotification) "
+												+ notification.getSource() + " : " + Constants.M_MEMBER_SUSPECT,
 										Constants.CRITICAL);
 							}
 						}
@@ -370,7 +404,7 @@ public abstract class MonitorImpl implements Monitor {
 						if (!isBlocked((String) notification.getSource())) {
 							log(getUtil().getUserDataInfo(Constants.ALERT_LEVEL, notification.getUserData()),
 									(String) getUtil().getUserDataInfo(Constants.MEMBER, notification.getUserData()),
-									notification.getMessage(), notification.getUserData());
+									"(handleNotification) " + notification.getMessage(), notification.getUserData());
 							processMessage(notification);
 						}
 					}
@@ -402,8 +436,8 @@ public abstract class MonitorImpl implements Monitor {
 	 * @throws Exception
 	 */
 	private void changeLogLevel() throws Exception {
-		mbs.invoke(getSystemName(), Constants.ALERT_LEVEL_CHANGE, new Object[] { Constants.WARNING.toLowerCase() },
-				new String[] { String.class.getName() });
+		util.invokePutValue(mbs, getSystemName(), Constants.ALERT_LEVEL_CHANGE,
+				new Object[] { Constants.WARNING.toLowerCase() }, new String[] { String.class.getName() });
 	}
 
 	/**
@@ -429,7 +463,7 @@ public abstract class MonitorImpl implements Monitor {
 		try {
 			String[] members = util.getNames(mbs, systemName, ListType.LOCATORS);
 			ObjectName memberName = new ObjectName(Constants.MEMBER_OBJECT_NAME + members[0]);
-			String status = (String) mbs.invoke(memberName, Constants.STATUS.toLowerCase(), new Object[] {},
+			String status = util.invokeGetString(mbs, memberName, Constants.STATUS.toLowerCase(), new Object[] {},
 					new String[] {});
 			status = status.substring(1, status.length() - 2);
 			String[] statuses = status.split(",");
@@ -445,8 +479,8 @@ public abstract class MonitorImpl implements Monitor {
 				}
 			}
 		} catch (Exception e) {
-			log(LogType.ERROR.toString(), "Internal", "getJMXDetails: " + e.getMessage(), null);
-			throw new RuntimeException(e.toString());
+			log(LogType.ERROR.toString(), "Internal", "(getJMXDetails) " + e.getMessage(), null);
+			throw new RuntimeException("(getJMXDetails) " + e.toString());
 		}
 	}
 
@@ -470,15 +504,7 @@ public abstract class MonitorImpl implements Monitor {
 	 * @param member
 	 */
 	private void buildSpecialLogMessage(String message, String level, long timeStamp, String member) {
-		SimpleDateFormat df = new SimpleDateFormat(Constants.DATE_FORMAT);
-		SimpleDateFormat tf = new SimpleDateFormat(Constants.TIME_FORMAT);
-		SimpleDateFormat zf = new SimpleDateFormat(Constants.ZONE_FORMAT);
-
-		LogHeader header = new LogHeader(level, df.format(timeStamp), tf.format(timeStamp), zf.format(timeStamp),
-				member, null, null);
-
-		LogMessage logMessage = new LogMessage(header, message);
-		logMessage.setEvent(null);
+		LogMessage logMessage = getUtil().buildSpecialLogMessage(message, level, timeStamp, member);
 		sendAlert(logMessage);
 		writeLog(logMessage);
 	}
@@ -513,46 +539,7 @@ public abstract class MonitorImpl implements Monitor {
 	 * @param user
 	 */
 	private void log(String logType, String member, String message, Object user) {
-		Object userData = "";
-		String memberData = "";
-		if (user != null)
-			userData = user;
-		if (member != null)
-			memberData = member;
-		StringBuilder str = new StringBuilder();
-		SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_TIME_FORMAT);
-		String dt = sdf.format(new Date());
-		str.append(getLoggingHeader());
-		str.append(" | " + dt);
-		str.append(" | " + logType);
-		str.append(" | " + memberData);
-		getApplicationLog().info(str.toString() + " | " + message + " " + userData);
-	}
-
-	/**
-	 * Creates the environment, cluster and site names if defined otherwise use
-	 * default names
-	 * 
-	 * @return environment, cluster and site names
-	 */
-	private String getLoggingHeader() {
-		StringBuilder sb = new StringBuilder();
-		if (getEnvironment() != null && getEnvironment().length() > 0) {
-			sb.append(getEnvironment());
-		} else {
-			sb.append("Environment - " + Constants.NOT_DEFINED);
-		}
-		if (getCluster() != null && getCluster().length() > 0) {
-			sb.append(" | " + getCluster());
-		} else {
-			sb.append(" | Cluster - " + Constants.NOT_DEFINED);
-		}
-		if (getSite() != null && getSite().length() > 0) {
-			sb.append(" | " + getSite());
-		} else {
-			sb.append(" | Site - " + Constants.NOT_DEFINED);
-		}
-		return sb.toString();
+		util.log(getApplicationLog(), logType, member, message, user, getCluster(), getSite(), getEnvironment());
 	}
 
 	/**
@@ -562,7 +549,7 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private void writeLog(LogMessage logMessage) {
 		StringBuilder str = new StringBuilder();
-		str.append(getLoggingHeader());
+		str.append(util.getLoggingHeader(getCluster(), getSite(), getEnvironment()));
 		str.append(" | " + logMessage.getHeader().getDate() + " " + logMessage.getHeader().getTime());
 		str.append(" | " + logMessage.getHeader().getSeverity());
 		str.append(" | " + logMessage.getHeader().getMember());
@@ -576,6 +563,12 @@ public abstract class MonitorImpl implements Monitor {
 	 * @param logMessage
 	 */
 	public abstract void sendAlert(LogMessage logMessage);
+
+	/**
+	 * retrieve the cmdb json object as a string
+	 * 
+	 */
+	public abstract String getCmdbHealth();
 
 	/**
 	 * Check for duplicate event messages. Event message timeout after a define
@@ -682,11 +675,12 @@ public abstract class MonitorImpl implements Monitor {
 	private void loadMonitorProps() {
 		int value = 0;
 		long lValue = 0;
+		Boolean bValue;
 		String[] split;
 		Properties monitorProps = new Properties();
 
 		try {
-			monitorProps.load(MonitorImpl.class.getClassLoader().getResourceAsStream(Constants.HM_PROPS));
+			monitorProps.load(MonitorImpl.class.getClassLoader().getResourceAsStream(Constants.MONITOR_PROPS));
 
 			setJmxHost(monitorProps.getProperty(Constants.P_MANAGERS));
 			if ((getJmxHost() == null) || (getJmxHost().length() == 0)) {
@@ -746,6 +740,19 @@ public abstract class MonitorImpl implements Monitor {
 				setReconnectRetryAttempts(value);
 			}
 
+			bValue = Boolean.parseBoolean(monitorProps.getProperty(Constants.P_HEALTH_CHK));
+			if (bValue != null) {
+				setHealthCheck(bValue);
+			}
+
+			if (isHealthCheck()) {
+				if (monitorProps.getProperty(Constants.P_HEALTH_CHK_INT) != null) {
+					if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_HEALTH_CHK_INT))) {
+						lValue = Long.parseLong(monitorProps.getProperty(Constants.P_HEALTH_CHK_INT));
+						healthCheckInterval = (lValue * 60) * 1000;
+					}
+				}
+			}
 		} catch (IOException e) {
 			throw new RuntimeException(Constants.E_PROC_PROPS + e.getMessage());
 		}
@@ -766,10 +773,10 @@ public abstract class MonitorImpl implements Monitor {
 				if (getReconnectRetryCount() > getReconnectRetryAttempts()) {
 					setReconnectRetryCount(0);
 					buildSpecialLogMessage("JMX Agent:" + Constants.M_JMX_FAILED, Constants.MAJOR, new Date().getTime(),
-							"JMX Agent");
+							getJmxHost());
 				}
 			} else {
-				log(LogType.INFO.toString(), "jmxHost", getJmxHost() + " : " + Constants.M_JMX_MGR_JOINED, null);
+				log(LogType.INFO.toString(), getJmxHost(), getJmxHost() + " : " + Constants.M_JMX_MGR_JOINED, null);
 				if (!(getJmxHost().equals(getLastJmxHost())) && (getLastJmxHost() != "")) {
 					buildSpecialLogMessage(Constants.M_MON_MGR_NEW + " new manager: " + getJmxHost()
 							+ " previous manager: " + getLastJmxHost(), Constants.CLEAR, new Date().getTime(),
@@ -785,73 +792,96 @@ public abstract class MonitorImpl implements Monitor {
 	 * 
 	 * @throws Exception
 	 */
-	private void processMbeans() throws Exception {
-
+	private void processMbeans() {
+		String currentMember = null;
 		for (MxBeans.MxBean bean : getMxBeans().getMxBean()) {
-			switch (bean.getMxBeanName()) {
-			case DISTRIBUTED_SYSTEM_MX_BEAN:
-				getAttributes(bean, getSystemName());
-				break;
-			case MEMBER_MX_BEAN:
-				for (ObjectName name : getMembers()) {
-					if (!isBlocked(name.getKeyProperty("member")))
-						getAttributes(bean, name);
+			try {
+				switch (bean.getMxBeanName()) {
+				case DISTRIBUTED_SYSTEM_MX_BEAN:
+					getAttributes(bean, getSystemName());
+					break;
+				case MEMBER_MX_BEAN:
+					for (ObjectName name : getMembers()) {
+						currentMember = name.getKeyProperty("member");
+						if (!isBlocked(name.getKeyProperty("member")))
+							getAttributes(bean, name);
+					}
+					break;
+				case CACHE_SERVER_MX_BEAN:
+					for (ObjectName name : getCacheServers()) {
+						currentMember = name.getKeyProperty("member");
+						if (!isBlocked(name.getKeyProperty("member")))
+							getAttributes(bean, name);
+					}
+					break;
+				case DISK_STORE_MX_BEAN:
+					for (String name : getServers()) {
+						currentMember = name;
+						if (!isBlocked(name))
+							getUniqueAttributes(bean, name, Constants.ObjectNameType.DISK_STORE);
+					}
+					break;
+				case REGION_MX_BEAN:
+					for (String name : getServers()) {
+						currentMember = name;
+						if (!isBlocked(name))
+							getUniqueAttributes(bean, name, Constants.ObjectNameType.REGION);
+					}
+					break;
+				case LOCK_SERVICE_MX_BEAN:
+					for (String name : getServers()) {
+						currentMember = name;
+						if (!isBlocked(name))
+							getUniqueAttributes(bean, name, Constants.ObjectNameType.LOCK);
+					}
+					break;
+				case ASYNC_EVENT_QUEUE_MX_BEAN:
+					for (String name : getServers()) {
+						currentMember = name;
+						if (!isBlocked(name))
+							getUniqueAttributes(bean, name, Constants.ObjectNameType.ASYNC_QUEUES);
+					}
+					break;
+				case GATEWAY_SENDER_MX_BEAN:
+					for (String name : getServers()) {
+						currentMember = name;
+						if (!isBlocked(name))
+							getUniqueAttributes(bean, name, Constants.ObjectNameType.GATEWAY_SENDERS);
+					}
+					break;
+				case GATEWAY_RECEIVER_MX_BEAN:
+					for (String name : getServers()) {
+						currentMember = name;
+						if (!isBlocked(name))
+							getUniqueAttributes(bean, name, Constants.ObjectNameType.GATEWAY_RECEIVERS);
+					}
+					break;
+				case DISTRIBUTED_REGION_MX_BEAN:
+					for (ObjectName name : getDistributedRegions()) {
+						currentMember = name.getKeyProperty("member");
+						if (!isBlocked(name.getKeyProperty("member")))
+							getAttributes(bean, name);
+					}
+					break;
+				case DISTRIBUTED_LOCK_SERVICE_MX_BEAN:
+					for (ObjectName name : getDistributedLocks()) {
+						currentMember = name.getKeyProperty("member");
+						if (!isBlocked(name.getKeyProperty("member")))
+							getAttributes(bean, name);
+					}
+					break;
 				}
-				break;
-			case CACHE_SERVER_MX_BEAN:
-				for (ObjectName name : getCacheServers()) {
-					if (!isBlocked(name.getKeyProperty("member")))
-						getAttributes(bean, name);
+			} catch (Exception e) {
+				if (e instanceof InstanceNotFoundException) {
+					if (!isHealthCheck()) {
+						log(LogType.ERROR.toString(), "Internal", "(processMbeans) member " + currentMember
+								+ " was not found exception: " + e.getMessage(), null);
+
+					}
+				} else {
+					log(LogType.ERROR.toString(), "Internal",
+							"(processMbeans) " + e.getMessage() + " stack: " + e.getStackTrace(), null);
 				}
-				break;
-			case DISK_STORE_MX_BEAN:
-				for (String name : getServers()) {
-					if (!isBlocked(name))
-						getUniqueAttributes(bean, name, Constants.ObjectNameType.DISK_STORE);
-				}
-				break;
-			case REGION_MX_BEAN:
-				for (String name : getServers()) {
-					if (!isBlocked(name))
-						getUniqueAttributes(bean, name, Constants.ObjectNameType.REGION);
-				}
-				break;
-			case LOCK_SERVICE_MX_BEAN:
-				for (String name : getServers()) {
-					if (!isBlocked(name))
-						getUniqueAttributes(bean, name, Constants.ObjectNameType.LOCK);
-				}
-				break;
-			case ASYNC_EVENT_QUEUE_MX_BEAN:
-				for (String name : getServers()) {
-					if (!isBlocked(name))
-						getUniqueAttributes(bean, name, Constants.ObjectNameType.ASYNC_QUEUES);
-				}
-				break;
-			case GATEWAY_SENDER_MX_BEAN:
-				for (String name : getServers()) {
-					if (!isBlocked(name))
-						getUniqueAttributes(bean, name, Constants.ObjectNameType.GATEWAY_SENDERS);
-				}
-				break;
-			case GATEWAY_RECEIVER_MX_BEAN:
-				for (String name : getServers()) {
-					if (!isBlocked(name))
-						getUniqueAttributes(bean, name, Constants.ObjectNameType.GATEWAY_RECEIVERS);
-				}
-				break;
-			case DISTRIBUTED_REGION_MX_BEAN:
-				for (ObjectName name : getDistributedRegions()) {
-					if (!isBlocked(name.getKeyProperty("member")))
-						getAttributes(bean, name);
-				}
-				break;
-			case DISTRIBUTED_LOCK_SERVICE_MX_BEAN:
-				for (ObjectName name : getDistributedLocks()) {
-					if (!isBlocked(name.getKeyProperty("member")))
-						getAttributes(bean, name);
-				}
-				break;
 			}
 		}
 	}
@@ -1060,8 +1090,8 @@ public abstract class MonitorImpl implements Monitor {
 				}
 			}
 		} catch (Exception e) {
-			log(LogType.ERROR.toString(), "ThresholdMonitorTask: ",
-					e.getMessage() + " Attribute name=" + attribute.getName() + " value=" + attribute.getValue(), null);
+			log(LogType.ERROR.toString(), "Internal", "(checkThreshold) " + e.getMessage() + " Attribute name="
+					+ attribute.getName() + " value=" + attribute.getValue(), null);
 		}
 		return null;
 	}
@@ -1080,13 +1110,33 @@ public abstract class MonitorImpl implements Monitor {
 						processMbeans();
 				} catch (InterruptedException e) {
 					// do nothing
-				} catch (Exception e) {
-					if (e instanceof java.rmi.ConnectException) {
-						if (getJmxConnectionActive()) {
-							setJmxConnectionActive(false);
+				}
+			}
+		}
+	}
+
+	/**
+	 * This class is used to spawn a thread for health check
+	 * 
+	 */
+	private class HealthCheckTask extends Thread {
+		HealthCheckImpl healthCheck = new HealthCheckImpl(mbs, systemName, applicationLog, util, cluster, site,
+				environment);
+
+		public void run() {
+			while (!shutdown) {
+				try {
+					Thread.sleep(healthCheckInterval);
+					if (getJmxConnectionActive()) {
+						List<LogMessage> logMessages = healthCheck.doHealthCheck(getCmdbHealth());
+						if (logMessages != null) {
+							for (LogMessage lm : logMessages) {
+								sendAlert(lm);
+							}
 						}
 					}
-					log(LogType.ERROR.toString(), "ThresholdMonitorTask: ", e.getMessage(), null);
+				} catch (InterruptedException e) {
+					// do nothing
 				}
 			}
 		}
@@ -1096,27 +1146,27 @@ public abstract class MonitorImpl implements Monitor {
 		return scheduleExecutor;
 	}
 
-	private String getSite() {
+	public String getSite() {
 		return site;
 	}
 
-	private void setSite(String site) {
+	public void setSite(String site) {
 		this.site = site;
 	}
 
-	private String getEnvironment() {
+	public String getEnvironment() {
 		return environment;
 	}
 
-	private void setEnvironment(String environment) {
+	public void setEnvironment(String environment) {
 		this.environment = environment;
 	}
 
-	private String getCluster() {
+	public String getCluster() {
 		return cluster;
 	}
 
-	private void setCluster(String cluster) {
+	public void setCluster(String cluster) {
 		this.cluster = cluster;
 	}
 
@@ -1397,4 +1447,11 @@ public abstract class MonitorImpl implements Monitor {
 		blockers = aBlockers;
 	}
 
+	public boolean isHealthCheck() {
+		return healthCheck;
+	}
+
+	public void setHealthCheck(boolean healthCheck) {
+		this.healthCheck = healthCheck;
+	}
 }

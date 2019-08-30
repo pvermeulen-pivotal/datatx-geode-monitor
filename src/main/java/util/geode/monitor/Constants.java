@@ -23,11 +23,11 @@ public class Constants {
 	public static final String CLEAR = "CLEAR";
 	public static final String SEVERE = "SEVERE";
 	public static final String ERROR = "ERROR";
-	public static final String NOT_DEFINED = "Not Defined";
 	public static final String EXCLUDED_MESSAGE_FILE = "excludedMessages.xml";
 	public static final String GEMFIRE_THREAD_FILE = "gemfireThreads.xml";
 	public static final String MXBEAN_FILE = "mxbeans.xml";
-	public static final String HM_PROPS = "monitor.properties";
+	public static final String MONITOR_PROPS = "monitor.properties";
+	public static final String HEALTH_PROPS = "health.properties";
 	public static final String DATE_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss:SSS";
 	public static final String DATE_FORMAT = "yyyy/MM/dd";
 	public static final String TIME_FORMAT = "HH:mm:ss:SSS";
@@ -75,6 +75,8 @@ public class Constants {
 	public static final String P_MAX_DUPS = "maximum-duplicates";
 	public static final String P_RECONNECT_W_TIME = "reconnect-wait-time";
 	public static final String P_RECONNECT_R_ATTEMPTS = "reconnect-retry-attempts";
+	public static final String P_HEALTH_CHK = "health-check-enabled";
+	public static final String P_HEALTH_CHK_INT = "health-check-interval";
 	public static final String E_HOST = "host name must be set.";
 	public static final String E_PORT = "port must be an integer between zero and 65535.";
 	public static final String E_COMMAND_PORT = "command port must be an integer between zero and 65535.";
