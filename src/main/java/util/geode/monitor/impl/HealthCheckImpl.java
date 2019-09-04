@@ -31,20 +31,20 @@ import util.geode.monitor.Constants.LogType;
 import util.geode.monitor.log.LogMessage;
 
 public class HealthCheckImpl implements HealthCheck {
+	private static final String CONNECTED = "Connected";
+	private static final String RUNNING = "Running";
+	private static final String MEMBER = "member";
+	private static final String MAJOR = "MAJOR";
+	private static final String NAME = "name";
+	private static final String HOST = "host";
+	private static final String PORT = "port";
 	private static final String GC_TIME_MILLIS = "gcTimeMillis";
 	private static final String MAX_GC_TIME_MILLIS = "maximumGCTimeMillis";
 	private static final String MAX_HEAP_USAGE_PERCENT = "maximumHeapUsagePercent";
 	private static final String GATEWAY_SENDER = "gatewaySender";
 	private static final String EVENT_QUEUE_SIZE = "EventQueueSize";
-	private static final String CONNECTED = "Connected";
-	private static final String RUNNING = "Running";
 	private static final String NUMBER_GATEWAYS = "NumGateways";
-	private static final String MEMBER = "member";
 	private static final String GATEWAY_MAX_QUEUE_SIZE = "gatewayMaximumQueueSize";
-	private static final String MAJOR = "MAJOR";
-	private static final String NAME = "name";
-	private static final String HOST = "host";
-	private static final String PORT = "port";
 	private static final String SHOW_JVM_METRICS = "showJVMMetrics";
 	private static final String JMX_MEMBER_COUNT = "MemberCount";
 	private static final String JMX_LOCATOR_COUNT = "LocatorCount";
@@ -586,11 +586,11 @@ public class HealthCheckImpl implements HealthCheck {
 		if (member.getType().equals(MemberType.LOCATOR)) {
 			return new ClientCacheFactory().addPoolLocator(member.getHost(), member.getPort())
 					.set(NAME, member.getName()).setPdxReadSerialized(true).set(LOG_LEVEL, CONFIG)
-					.set(LOG_FILE, "logs/health-client.log").create();
+					.set(LOG_FILE, "logs/gemfire-health-client.log").create();
 		} else {
 			return new ClientCacheFactory().addPoolServer(member.getHost(), member.getPort())
 					.set(NAME, member.getName()).setPdxReadSerialized(true).set(LOG_LEVEL, CONFIG)
-					.set(LOG_FILE, "logs/health-client.log").create();
+					.set(LOG_FILE, "logs/gemfire-health-client.log").create();
 		}
 	}
 
