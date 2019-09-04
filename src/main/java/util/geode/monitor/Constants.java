@@ -86,6 +86,7 @@ public class Constants {
 	public static final String STATUS = "STATUS";
 	public static final String BLOCK = "BLOCK";
 	public static final String UNBLOCK = "UNBLOCK";
+	public static final String TLS = "TLS";
 	public static final String LIST_CACHE_SERVERS_OBJECTS = "listCacheServerObjectNames";
 	public static final String LIST_GATEWAY_SENDERS_OBJECTS = "listGatewaySenderObjectNames";
 	public static final String LIST_GATEWAY_RECEIVERS_OBJECTS = "listGatewayReceiverObjectNames";
@@ -108,4 +109,9 @@ public class Constants {
 	public static final String ASYNC_OBJECT_NAME="GemFire:service=AsyncEventQueue,queue=qname,type=Member,member=mname";
 	public static final String THRESHOLD_MESSAGE="Threshold Exceeded";
 	public static final String SOURCE="MONITOR";
+	public static final String LOG4J_PROPS="log4j.properties";
+	public static final String APPL_LOG="applicationLog";
+	public static final String EXCP_LOG="exceptionLog";
+	public static final String THRESHOLD_MON="Threshold Monitor";
+	public static final String HEALTH_CHK_MON="Health Check";
 }

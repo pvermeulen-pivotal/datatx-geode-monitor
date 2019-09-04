@@ -22,7 +22,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
 import util.geode.monitor.Constants;
-import util.geode.monitor.Constants.ListType;
 import util.geode.monitor.Constants.LogType;
 import util.geode.monitor.Constants.ObjectNameType;
 import util.geode.monitor.Monitor;
@@ -46,7 +45,6 @@ import util.geode.monitor.xml.MxBeans.MxBean;
  * @author PaulVermeulen
  *
  */
-
 public abstract class MonitorImpl implements Monitor {
 	private Util util = new Util();
 	private MxBeans mxBeans;
@@ -158,10 +156,10 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private void createLogAppender() {
 		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		URL url = loader.getResource("log4j.properties");
+		URL url = loader.getResource(Constants.LOG4J_PROPS);
 		PropertyConfigurator.configure(url);
-		setApplicationLog(Logger.getLogger("applicationLog"));
-		setExceptionLog(Logger.getLogger("exceptionLog"));
+		setApplicationLog(Logger.getLogger(Constants.APPL_LOG));
+		setExceptionLog(Logger.getLogger(Constants.EXCP_LOG));
 	}
 
 	/**
@@ -257,15 +255,14 @@ public abstract class MonitorImpl implements Monitor {
 				}
 			}
 		}
-		getJMXDetails();
 
 		if (getMxBeans() != null) {
-			thresholdThread = new Thread(new ThresholdMonitorTask(), "Threshold Monitor");
+			thresholdThread = new Thread(new ThresholdMonitorTask(), Constants.THRESHOLD_MON);
 			thresholdThread.start();
 		}
 
 		if (isHealthCheck()) {
-			healthCheckThread = new Thread(new HealthCheckTask(), "Health Check");
+			healthCheckThread = new Thread(new HealthCheckTask(), Constants.HEALTH_CHK_MON);
 			healthCheckThread.start();
 		}
 	}
@@ -458,35 +455,6 @@ public abstract class MonitorImpl implements Monitor {
 		log(logType, notification.getSource().toString(), notification.getMessage(), notification.getUserData());
 		if (specialMsg != null) {
 			buildSpecialLogMessage(specialMsg, error, notification.getTimeStamp(), notification.getSource().toString());
-		}
-	}
-
-	/**
-	 * Get the details from the locator member for the cluster name, environment and
-	 * site
-	 */
-	private void getJMXDetails() {
-		try {
-			String[] members = util.getNames(mbs, systemName, ListType.LOCATORS);
-			ObjectName memberName = new ObjectName(Constants.MEMBER_OBJECT_NAME + members[0]);
-			String status = util.invokeGetString(mbs, memberName, Constants.STATUS.toLowerCase(), new Object[] {},
-					new String[] {});
-			status = status.substring(1, status.length() - 2);
-			String[] statuses = status.split(",");
-			for (String stat : statuses) {
-				stat = stat.replaceAll("\"", "");
-				String[] keyValue = stat.split(":");
-				if (keyValue[0].contains(Constants.GF_CLUSTER)) {
-					setCluster(keyValue[0].substring(Constants.GF_CLUSTER.length()).toUpperCase());
-				} else if (keyValue[0].contains(Constants.GF_ENV)) {
-					setEnvironment(keyValue[0].substring(Constants.GF_ENV.length()).toUpperCase());
-				} else if (keyValue[0].contains(Constants.GF_SITE)) {
-					setSite(keyValue[0].substring(Constants.GF_SITE.length()).toUpperCase());
-				}
-			}
-		} catch (Exception e) {
-			log(LogType.ERROR.toString(), "Internal", "(getJMXDetails) " + e.getMessage(), null);
-			throw new RuntimeException("(getJMXDetails) " + e.toString());
 		}
 	}
 
