@@ -118,7 +118,7 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	public void initialize() throws RuntimeException {
 		util = new Util();
-		
+
 		try {
 			loadMonitorProps();
 		} catch (Exception e) {
@@ -507,7 +507,7 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private void buildSpecialLogMessage(String message, String level, long timeStamp, String member) {
 		LogMessage logMessage = getUtil().buildSpecialLogMessage(message, level, timeStamp, member);
-		sendAlert(logMessage);
+		sendAlert(logMessage, getApplicationLog());
 		writeLog(logMessage);
 	}
 
@@ -526,7 +526,7 @@ public abstract class MonitorImpl implements Monitor {
 		if (validMessage(logMessage)) {
 			if (!checkForDuplicateMessage(logMessage)) {
 				messages.add(logMessage);
-				sendAlert(logMessage);
+				sendAlert(logMessage, getApplicationLog());
 				writeLog(logMessage);
 			}
 		}
@@ -564,13 +564,13 @@ public abstract class MonitorImpl implements Monitor {
 	 * 
 	 * @param logMessage
 	 */
-	public abstract void sendAlert(LogMessage logMessage);
+	public abstract void sendAlert(LogMessage logMessage, Logger log);
 
 	/**
 	 * retrieve the cmdb json object as a string
 	 * 
 	 */
-	public abstract String getCmdbHealth();
+	public abstract String getCmdbHealth(Logger log);
 
 	/**
 	 * Check for duplicate event messages. Event message timeout after a define
@@ -804,10 +804,10 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private void processMbeans() {
 		String currentMember = null;
-		
+
 		if (getMxBeans() == null)
 			return;
-		
+
 		for (MxBeans.MxBean bean : getMxBeans().getMxBean()) {
 			try {
 				switch (bean.getMxBeanName()) {
@@ -1142,10 +1142,10 @@ public abstract class MonitorImpl implements Monitor {
 				try {
 					Thread.sleep(healthCheckInterval);
 					if (getJmxConnectionActive()) {
-						List<LogMessage> logMessages = healthCheck.doHealthCheck(getCmdbHealth());
+						List<LogMessage> logMessages = healthCheck.doHealthCheck(getCmdbHealth(getApplicationLog()));
 						if (logMessages != null) {
 							for (LogMessage lm : logMessages) {
-								sendAlert(lm);
+								sendAlert(lm, getApplicationLog());
 							}
 						}
 					}

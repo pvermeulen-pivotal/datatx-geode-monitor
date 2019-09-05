@@ -10,9 +10,9 @@ import util.geode.monitor.xml.ExcludedMessages;
  *
  */
 public interface Monitor {
-	public void sendAlert(LogMessage logMessage);
+	public void sendAlert(LogMessage logMessage, Logger log);
 
-	public String getCmdbHealth();
+	public String getCmdbHealth(Logger log);
 
 	public int getCommandPort();
 
