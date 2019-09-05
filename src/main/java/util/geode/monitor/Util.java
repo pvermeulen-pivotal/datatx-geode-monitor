@@ -46,16 +46,13 @@ public class Util {
 	 * @param jaxbContext
 	 * @param fileName
 	 * @return
+	 * @throws JAXBException 
 	 */
-	public Object processJAXB(JAXBContext jaxbContext, String fileName) {
-		try {
-			Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-			JAXBElement<?> unmarshalledObject = (JAXBElement<?>) unmarshaller
-					.unmarshal(ClassLoader.getSystemResourceAsStream(fileName));
-			return unmarshalledObject.getValue();
-		} catch (JAXBException e) {
-			throw new RuntimeException("Error unmarshalling " + fileName + ": " + e.getMessage());
-		}
+	public Object processJAXB(JAXBContext jaxbContext, String fileName) throws JAXBException {
+		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+		JAXBElement<?> unmarshalledObject = (JAXBElement<?>) unmarshaller
+				.unmarshal(ClassLoader.getSystemResourceAsStream(fileName));
+		return unmarshalledObject.getValue();
 	}
 
 	/**
@@ -185,8 +182,8 @@ public class Util {
 	 * @param message
 	 * @param user
 	 */
-	public void log(Logger log, String logType, String member, String message, Object user, String cluster,
-			String site, String environment) {
+	public void log(Logger log, String logType, String member, String message, Object user, String cluster, String site,
+			String environment) {
 		Object userData = "";
 		String memberData = "";
 		if (user != null)

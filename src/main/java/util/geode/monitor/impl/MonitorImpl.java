@@ -46,7 +46,7 @@ import util.geode.monitor.xml.MxBeans.MxBean;
  *
  */
 public abstract class MonitorImpl implements Monitor {
-	private Util util = new Util();
+	private Util util;
 	private MxBeans mxBeans;
 	private JMXConnector jmxConnection;
 	private MBeanServerConnection mbs;
@@ -54,13 +54,22 @@ public abstract class MonitorImpl implements Monitor {
 	private NotificationListener connectionListener;
 	private NotificationListener mbsListener;
 	private AtomicBoolean jmxConnectionActive = new AtomicBoolean(false);
-	private List<LogMessage> messages = new ArrayList<LogMessage>();
 	private ExcludedMessages excludedMessages = new ExcludedMessages();
 	private GemFireThreads gemfireThreads = new GemFireThreads();
 	private Logger applicationLog;
 	private Logger exceptionLog;
 	private ScheduledThreadPoolExecutor scheduleExecutor = new ScheduledThreadPoolExecutor(1);
 	private ScheduledFuture<AgentMonitorTask> agentStartTimer;
+	private ObjectName[] members;
+	private ObjectName[] cacheServers;
+	private ObjectName[] distributedRegions;
+	private ObjectName[] distributedLocks;
+	private JMXServiceURL url = null;
+	private Thread thresholdThread;
+	private Thread healthCheckThread;
+	private List<String> jmxHosts = new ArrayList<String>();
+	private List<LogMessage> messages = new ArrayList<LogMessage>();
+
 	private long messageLifeDuration = 60000 * 15;
 	private long reconnectWaitTime = 60;
 	private long healthCheckInterval = (10 * 60) * 1000;
@@ -79,14 +88,6 @@ public abstract class MonitorImpl implements Monitor {
 	private int nextHostIndex;
 	private boolean shutdown = false;
 	private boolean healthCheck = false;
-	private ObjectName[] members;
-	private ObjectName[] cacheServers;
-	private ObjectName[] distributedRegions;
-	private ObjectName[] distributedLocks;
-	private List<String> jmxHosts = new ArrayList<String>();
-	private JMXServiceURL url = null;
-	private Thread thresholdThread;
-	private Thread healthCheckThread;
 
 	/**
 	 * Checks to see if the jmx connection is still valid
@@ -113,17 +114,44 @@ public abstract class MonitorImpl implements Monitor {
 	 * 
 	 * process the xml files connect to agent
 	 * 
-	 * @throws Exception
+	 * @throws RuntimeException
 	 */
-	public void initialize() throws Exception {
-		loadMonitorProps();
+	public void initialize() throws RuntimeException {
+		util = new Util();
+		
+		try {
+			loadMonitorProps();
+		} catch (Exception e) {
+			throw new RuntimeException("(initialize) Error loading monitor properties Exception: " + e.getMessage());
+		}
+
 		createLogAppender();
-		setGemfireThreads((GemFireThreads) getUtil()
-				.processJAXB(JAXBContext.newInstance(GemFireThreadObjectFactory.class), Constants.GEMFIRE_THREAD_FILE));
-		setExcludedMessages((ExcludedMessages) getUtil().processJAXB(
-				JAXBContext.newInstance(ExcludedMessageObjectFactory.class), Constants.EXCLUDED_MESSAGE_FILE));
-		setMxBeans((MxBeans) getUtil().processJAXB(JAXBContext.newInstance(MxBeansObjectFactory.class),
-				Constants.MXBEAN_FILE));
+
+		try {
+			setGemfireThreads((GemFireThreads) getUtil().processJAXB(
+					JAXBContext.newInstance(GemFireThreadObjectFactory.class), Constants.GEMFIRE_THREAD_FILE));
+		} catch (Exception e) {
+			throw new RuntimeException(
+					"(initialize) Error processing GemFire threads xml Exception: " + e.getMessage());
+		}
+
+		try {
+			setExcludedMessages((ExcludedMessages) getUtil().processJAXB(
+					JAXBContext.newInstance(ExcludedMessageObjectFactory.class), Constants.EXCLUDED_MESSAGE_FILE));
+		} catch (Exception e) {
+			throw new RuntimeException(
+					"(initialize) Error processing GemFire excluded message xml Exception: " + e.getMessage());
+		}
+
+		try {
+			setMxBeans((MxBeans) getUtil().processJAXB(JAXBContext.newInstance(MxBeansObjectFactory.class),
+					Constants.MXBEAN_FILE));
+		} catch (Exception e) {
+			log(LogType.WARNING.toString(), "internal",
+					"(initialize) Error processing GemFire mxbean xml. No threshold monitoring will be performed. Exception: "
+							+ e.getMessage(),
+					(null));
+		}
 	}
 
 	/**
@@ -646,89 +674,97 @@ public abstract class MonitorImpl implements Monitor {
 	 * This method processes the monitor property file and configures the service
 	 * 
 	 */
-	private void loadMonitorProps() {
+	private void loadMonitorProps() throws Exception {
 		int value = 0;
 		long lValue = 0;
 		Boolean bValue;
 		String[] split;
 		Properties monitorProps = new Properties();
 
-		try {
-			monitorProps.load(MonitorImpl.class.getClassLoader().getResourceAsStream(Constants.MONITOR_PROPS));
+		monitorProps.load(MonitorImpl.class.getClassLoader().getResourceAsStream(Constants.MONITOR_PROPS));
 
-			setJmxHost(monitorProps.getProperty(Constants.P_MANAGERS));
-			if ((getJmxHost() == null) || (getJmxHost().length() == 0)) {
-				throw new RuntimeException(Constants.E_HOST);
+		setJmxHost(monitorProps.getProperty(Constants.P_MANAGERS));
+		if ((getJmxHost() == null) || (getJmxHost().length() == 0)) {
+			throw new RuntimeException(Constants.E_HOST);
+		}
+
+		split = getJmxHost().split(",");
+		if (split.length > 0) {
+			for (String str : split) {
+				addJmxHost(str);
 			}
-
-			split = getJmxHost().split(",");
+		} else {
+			split = jmxHost.split(" ");
 			if (split.length > 0) {
 				for (String str : split) {
 					addJmxHost(str);
 				}
-			} else {
-				split = jmxHost.split(" ");
-				if (split.length > 0) {
-					for (String str : split) {
-						addJmxHost(str);
-					}
-				}
 			}
+		}
 
-			setNextHostIndex(1);
-			if (getJmxHosts().size() == 0) {
-				addJmxHost(jmxHost);
-			}
+		setNextHostIndex(1);
+		if (getJmxHosts().size() == 0) {
+			addJmxHost(jmxHost);
+		}
 
+		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_PORT))) {
 			value = Integer.parseInt(monitorProps.getProperty(Constants.P_PORT));
 			if (value == 0) {
 				throw new RuntimeException(Constants.E_PORT);
 			} else {
 				setJmxPort(value);
 			}
+		}
 
+		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_COMMAND_PORT))) {
 			value = Integer.parseInt(monitorProps.getProperty(Constants.P_COMMAND_PORT));
 			if (value == 0) {
 				throw new RuntimeException(Constants.E_COMMAND_PORT);
 			} else {
 				setCommandPort(value);
 			}
+		}
 
+		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_MSG_DUR))) {
 			lValue = Long.parseLong(monitorProps.getProperty(Constants.P_MSG_DUR));
 			if (lValue > 0) {
 				setMessageLifeDuration(60000 * lValue);
 			}
+		}
 
+		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_MAX_DUPS))) {
 			value = Integer.parseInt(monitorProps.getProperty(Constants.P_MAX_DUPS));
 			if (value > 0) {
 				setMessageDuplicateLimit(value);
 			}
+		}
 
+		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_RECONNECT_W_TIME))) {
 			lValue = Long.parseLong(monitorProps.getProperty(Constants.P_RECONNECT_W_TIME));
 			if (lValue > 0) {
 				setReconnectWaitTime(lValue);
 			}
+		}
 
+		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_RECONNECT_R_ATTEMPTS))) {
 			value = Integer.parseInt(monitorProps.getProperty(Constants.P_RECONNECT_R_ATTEMPTS));
 			if (value > 0) {
 				setReconnectRetryAttempts(value);
 			}
+		}
 
-			bValue = Boolean.parseBoolean(monitorProps.getProperty(Constants.P_HEALTH_CHK));
-			if (bValue != null) {
-				setHealthCheck(bValue);
-			}
+		bValue = Boolean.parseBoolean(monitorProps.getProperty(Constants.P_HEALTH_CHK));
+		if (bValue != null) {
+			setHealthCheck(bValue);
+		}
 
-			if (isHealthCheck()) {
-				if (monitorProps.getProperty(Constants.P_HEALTH_CHK_INT) != null) {
-					if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_HEALTH_CHK_INT))) {
-						lValue = Long.parseLong(monitorProps.getProperty(Constants.P_HEALTH_CHK_INT));
-						healthCheckInterval = (lValue * 60) * 1000;
-					}
+		if (isHealthCheck()) {
+			if (monitorProps.getProperty(Constants.P_HEALTH_CHK_INT) != null) {
+				if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_HEALTH_CHK_INT))) {
+					lValue = Long.parseLong(monitorProps.getProperty(Constants.P_HEALTH_CHK_INT));
+					healthCheckInterval = (lValue * 60) * 1000;
 				}
 			}
-		} catch (IOException e) {
-			throw new RuntimeException(Constants.E_PROC_PROPS + e.getMessage());
 		}
 	}
 
@@ -768,6 +804,10 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private void processMbeans() {
 		String currentMember = null;
+		
+		if (getMxBeans() == null)
+			return;
+		
 		for (MxBeans.MxBean bean : getMxBeans().getMxBean()) {
 			try {
 				switch (bean.getMxBeanName()) {

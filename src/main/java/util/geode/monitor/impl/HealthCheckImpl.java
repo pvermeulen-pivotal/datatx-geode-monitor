@@ -1,5 +1,6 @@
 package util.geode.monitor.impl;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -305,16 +306,19 @@ public class HealthCheckImpl implements HealthCheck {
 			if (gatewaySender.getType().equals(GatewayType.PARALLEL)) {
 				if (!gatewaySender.isConnected()) {
 					// if gateway not connected to remote side send event
-					logMessages.add(util.buildSpecialLogMessage("Sender not connected to remote system", MAJOR,
-							new Date().getTime(), gatewaySender.getMember()));
+					logMessages.add(util.buildSpecialLogMessage("(doHealthCheck) Sender not connected to remote system",
+							MAJOR, new Date().getTime(), gatewaySender.getMember()));
 					log(LogType.WARNING.toString(), "internal",
-							"Sender not connected to remote system. Member=" + gatewaySender.getMember(), null);
+							"(doHealthCheck) Sender not connected to remote system. Member="
+									+ gatewaySender.getMember(),
+							null);
 				} else if (gatewaySender.getEventQueueSize() > jsonObj.getInt(GATEWAY_MAX_QUEUE_SIZE)) {
-					// if gateway is connected and maximum queue size exceeds threashold send alert
+					// if gateway is connected and maximum queue size exceeds threshold send alert
 					logMessages.add(util.buildSpecialLogMessage(
-							"Queue size greater than limit of " + jsonObj.getInt(GATEWAY_MAX_QUEUE_SIZE), MAJOR,
-							new Date().getTime(), gatewaySender.getMember()));
-					log(LogType.WARNING.toString(), "internal", "Queue size greater than limit of "
+							"(doHealthCheck) Queue size greater than limit of "
+									+ jsonObj.getInt(GATEWAY_MAX_QUEUE_SIZE),
+							MAJOR, new Date().getTime(), gatewaySender.getMember()));
+					log(LogType.WARNING.toString(), "internal", "(doHealthCheck) Queue size greater than limit of "
 							+ jsonObj.getInt(GATEWAY_MAX_QUEUE_SIZE) + " Member: " + gatewaySender.getMember(), null);
 				}
 			} else {
@@ -323,17 +327,21 @@ public class HealthCheckImpl implements HealthCheck {
 					// if gateway is the primary serial gateway
 					if (!gatewaySender.isConnected()) {
 						// if gateway is not connected to remote side send alert
-						logMessages.add(util.buildSpecialLogMessage("Sender not connected to remote system", MAJOR,
-								new Date().getTime(), gatewaySender.getMember()));
+						logMessages.add(
+								util.buildSpecialLogMessage("(doHealthCheck) Sender not connected to remote system",
+										MAJOR, new Date().getTime(), gatewaySender.getMember()));
 						log(LogType.ERROR.toString(), "internal",
-								"Sender not connected to remote system. Member: " + gatewaySender.getMember(), null);
+								"(doHealthCheck) Sender not connected to remote system. Member: "
+										+ gatewaySender.getMember(),
+								null);
 					} else if (gatewaySender.getEventQueueSize() > jsonObj.getInt(GATEWAY_MAX_QUEUE_SIZE)) {
 						// if serial gateway is connected and maximum queue size exceeds threshold send
 						// alert
 						logMessages.add(util.buildSpecialLogMessage(
-								"Queue size greater than limit of " + jsonObj.getInt(GATEWAY_MAX_QUEUE_SIZE), MAJOR,
-								new Date().getTime(), gatewaySender.getMember()));
-						log(LogType.ERROR.toString(), "internal", "Queue size greater than limit of "
+								"(doHealthCheck) Queue size greater than limit of "
+										+ jsonObj.getInt(GATEWAY_MAX_QUEUE_SIZE),
+								MAJOR, new Date().getTime(), gatewaySender.getMember()));
+						log(LogType.ERROR.toString(), "internal", "(doHealthCheck) Queue size greater than limit of "
 								+ jsonObj.getInt(GATEWAY_MAX_QUEUE_SIZE) + " Member: " + gatewaySender.getMember(),
 								null);
 					}
@@ -348,7 +356,7 @@ public class HealthCheckImpl implements HealthCheck {
 				return null;
 		} catch (Exception e) {
 			log(LogType.ERROR.toString(), "internal",
-					"(doHealthCheck) get gateway receivers exception: " + e.getMessage(), null);
+					"(doHealthCheck) Get gateway receivers exception: " + e.getMessage(), null);
 		}
 
 		for (ObjectName object : objects) {
@@ -379,9 +387,9 @@ public class HealthCheckImpl implements HealthCheck {
 				}
 			} catch (Exception e) {
 				logMessages
-						.add(util.buildSpecialLogMessage("(doHealthCheck) process gateway receiver objects attributes "
+						.add(util.buildSpecialLogMessage("(doHealthCheck) Process gateway receiver objects attributes "
 								+ oName + " exception: " + e.getMessage(), MAJOR, new Date().getTime(), oName));
-				log(LogType.ERROR.toString(), "internal", "(doHealthCheck) process gateway sender objects attributes "
+				log(LogType.ERROR.toString(), "internal", "(doHealthCheck) Process gateway sender objects attributes "
 						+ oName + " exception: " + e.getMessage(), null);
 			}
 		}
@@ -548,13 +556,11 @@ public class HealthCheckImpl implements HealthCheck {
 						Object value = region.get(keysToCheck[j]);
 						if (value == null) {
 							logMessages.add(util.buildSpecialLogMessage(
-									"Member " + member.getName() + " region " + region.getName()
-											+ " region object missing for key = " + keysToCheck[j],
+									"Region " + region.getName() + " region object missing for key = " + keysToCheck[j],
 									MAJOR, new Date().getTime(), member.getName()));
 							log(LogType.ERROR.toString(), "internal",
-									"(checkRegion) Member region " + region.getName()
-											+ " region object missing for key = " + keysToCheck[j] + " Member: "
-											+ member.getName(),
+									"(checkRegion) Region " + region.getName() + " region object missing for key = "
+											+ keysToCheck[j] + " Member: " + member.getName(),
 									null);
 						}
 					}
@@ -583,14 +589,18 @@ public class HealthCheckImpl implements HealthCheck {
 	 * @return
 	 */
 	private ClientCache createConnection(Member member) {
+		String dir = System.getProperty("user.dir");
+		if (!dir.endsWith(File.separator)) {
+			dir = dir + File.separator;
+		}
 		if (member.getType().equals(MemberType.LOCATOR)) {
 			return new ClientCacheFactory().addPoolLocator(member.getHost(), member.getPort())
 					.set(NAME, member.getName()).setPdxReadSerialized(true).set(LOG_LEVEL, CONFIG)
-					.set(LOG_FILE, "logs/gemfire-health-client.log").create();
+					.set(LOG_FILE, dir + "logs/gemfire-health-locator.log").create();
 		} else {
 			return new ClientCacheFactory().addPoolServer(member.getHost(), member.getPort())
 					.set(NAME, member.getName()).setPdxReadSerialized(true).set(LOG_LEVEL, CONFIG)
-					.set(LOG_FILE, "logs/gemfire-health-client.log").create();
+					.set(LOG_FILE, dir + "logs/gemfire-health-server.log").create();
 		}
 	}
 
@@ -654,10 +664,9 @@ public class HealthCheckImpl implements HealthCheck {
 			currentGCTimeMillis = (long) cds.get(name);
 			maximumGCTimeMillis = jObj.getLong(jsonName);
 			if (currentGCTimeMillis > maximumGCTimeMillis) {
-				logMessages.add(util.buildSpecialLogMessage(
-						"Member " + member.getName() + " current GC time exceeds limit of " + maximumGCTimeMillis,
+				logMessages.add(util.buildSpecialLogMessage("Current GC time exceeds limit of " + maximumGCTimeMillis,
 						MAJOR, new Date().getTime(), member.getName()));
-				log(LogType.ERROR.toString(), "internal", "(getJVMGCTime) Member current GC time exceeds limit of "
+				log(LogType.ERROR.toString(), "internal", "(getJVMGCTime) Current GC time exceeds limit of "
 						+ maximumGCTimeMillis + " Member: " + member.getName(), null);
 			}
 		}
@@ -670,7 +679,7 @@ public class HealthCheckImpl implements HealthCheck {
 	 * @throws Exception
 	 */
 	private Health getHealthDetails() throws Exception {
-		applicationLog.info("Retrieving GemFire health details");
+		applicationLog.debug("Retrieving GemFire health details");
 		Health health = new Health();
 		AttributeList al = getHealthAttributes(new String[] { JMX_MEMBER_COUNT, JMX_LOCATOR_COUNT }, systemName);
 		health.setLocatorCnt(Integer.parseInt(String.valueOf(((Attribute) al.get(1)).getValue())));
