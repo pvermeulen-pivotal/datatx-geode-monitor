@@ -40,6 +40,7 @@ import util.geode.monitor.xml.MxBeanType;
 import util.geode.monitor.xml.MxBeans;
 import util.geode.monitor.xml.MxBeansObjectFactory;
 import util.geode.monitor.xml.MxBeans.MxBean;
+import util.geode.monitor.xml.MxBeans.MxBean.Fields.Field;
 
 /**
  * @author PaulVermeulen
@@ -69,10 +70,12 @@ public abstract class MonitorImpl implements Monitor {
 	private Thread healthCheckThread;
 	private List<String> jmxHosts = new ArrayList<String>();
 	private List<LogMessage> messages = new ArrayList<LogMessage>();
+	private List<ThresholdDetail> thresholdDetails = new ArrayList<ThresholdDetail>();
 
 	private long messageLifeDuration = 60000 * 15;
 	private long reconnectWaitTime = 60;
 	private long healthCheckInterval = (10 * 60) * 1000;
+	private long thresholdAlertTtl = (2 * 60) * 1000;
 	private String jmxHost;
 	private String site;
 	private String environment;
@@ -86,6 +89,7 @@ public abstract class MonitorImpl implements Monitor {
 	private int reconnectRetryAttempts = 5;
 	private int reconnectRetryCount = 0;
 	private int nextHostIndex;
+	private int thresholdAlertCount = 5;
 	private boolean shutdown = false;
 	private boolean healthCheck = false;
 
@@ -753,6 +757,21 @@ public abstract class MonitorImpl implements Monitor {
 			}
 		}
 
+		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_THRESHOLD_ALERT_CNT))) {
+			value = Integer.parseInt(monitorProps.getProperty(Constants.P_THRESHOLD_ALERT_CNT));
+			if (value > 0) {
+				setThresholdAlertCount(value);
+			}
+		}
+
+		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_THRESHOLD_ALERT_TTL))) {
+			lValue = Long.parseLong(monitorProps.getProperty(Constants.P_THRESHOLD_ALERT_TTL));
+			if (lValue > 0) {
+				lValue = (lValue * 60) * 1000;
+				setThresholdAlertTtl(lValue);
+			}
+		}
+
 		bValue = Boolean.parseBoolean(monitorProps.getProperty(Constants.P_HEALTH_CHK));
 		if (bValue != null) {
 			setHealthCheck(bValue);
@@ -807,6 +826,8 @@ public abstract class MonitorImpl implements Monitor {
 
 		if (getMxBeans() == null)
 			return;
+
+		checkForExpiredThresholds();
 
 		for (MxBeans.MxBean bean : getMxBeans().getMxBean()) {
 			try {
@@ -979,11 +1000,59 @@ public abstract class MonitorImpl implements Monitor {
 	}
 
 	/**
+	 * checkForThresholdDetailAlert
+	 * 
+	 * Checks to see if threshold TTL exists and if count exceeds alert TTL
+	 * threshold set send alert flag
+	 * 
+	 * @param tDetail
+	 * @return
+	 */
+	/**
+	 * @param tDetail
+	 * @return
+	 */
+	private ThresholdDetail checkForThresholdDetailAlert(ThresholdDetail tDetail) {
+		for (int i = 0; i < thresholdDetails.size(); i++) {
+			if (thresholdDetails.get(i).getBeanName().equals(tDetail.getBeanName())
+					&& thresholdDetails.get(i).getBeanProperty().equals(tDetail.getBeanProperty())
+					&& thresholdDetails.get(i).getField().equals(tDetail.getField())
+					&& thresholdDetails.get(i).getType().equals(tDetail.getType())) {
+				thresholdDetails.get(i).setThresholdCount(thresholdDetails.get(i).getThresholdCount() + 1);
+				tDetail.setThresholdCount(thresholdDetails.get(i).getThresholdCount());
+				thresholdDetails.set(i, tDetail);
+				if (thresholdDetails.get(i).getThresholdCount() > thresholdAlertCount) {
+					thresholdDetails.get(i).setSendAlert(true);
+				}
+				return thresholdDetails.get(i);
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * checkForExpiredThresholds
+	 * 
+	 * Checks for expired threshold ttls and remove expired threshold
+	 */
+	private void checkForExpiredThresholds() {
+		if (!thresholdDetails.isEmpty()) {
+			List<ThresholdDetail> tds = new ArrayList<ThresholdDetail>();
+			long tm = new Date().getTime();
+			for (ThresholdDetail td : thresholdDetails) {
+				if (((td.getThresholdTm() + thresholdAlertTtl) > tm) && !td.isSendAlert()) {
+					tds.add(td);
+				}
+			}
+			thresholdDetails = tds;
+		}
+	}
+
+	/**
 	 * This method calls the check threshold method and if threshold is exceeded
 	 * creates a threshold detail object
 	 * 
-	 * 1param attrList
-	 * 
+	 * @param attrList
 	 * @param bean
 	 * @param fields
 	 * @param oName
@@ -991,28 +1060,37 @@ public abstract class MonitorImpl implements Monitor {
 	private void doThreshold(AttributeList attrList, MxBeans.MxBean bean, MxBeans.MxBean.Fields.Field field,
 			ObjectName oName) {
 		StringBuilder str;
-		ThresholdDetail tDetail = checkThreshold(attrList, field.getCount(), field.getPercentage(),
-				field.getFieldSize(), field.getPercentageFieldSize());
+		ThresholdDetail tDetail = checkThreshold(bean, field, attrList);
 		if (tDetail != null) {
+			ThresholdDetail td = checkForThresholdDetailAlert(tDetail);
+			if (td == null) {
+				tDetail.setThresholdCount(1);
+				thresholdDetails.add(tDetail);
+				return;
+			} else {
+				if (!td.isSendAlert()) {
+					return;
+				}
+			}
 			// send alert
 			str = new StringBuilder();
 			str.append(Constants.THRESHOLD_MESSAGE);
 			str.append(" " + bean.getMxBeanName());
 			str.append(" Property: " + field.getBeanProperty());
-			str.append(" Field: " + tDetail.getField() + " value=" + tDetail.getValue() + " exceeds" + " threshold="
-					+ tDetail.getThresholdValue());
-			if (tDetail.getType().equals(DetailType.PERCENT)) {
-				str.append(" [" + tDetail.getPercentage() + "% of field " + tDetail.getPercentageField() + ":"
-						+ tDetail.getPercentageValue() + "]");
+			str.append(" Field: " + td.getField() + " value=" + td.getValue() + " exceeds" + " threshold="
+					+ td.getThresholdValue());
+			if (td.getType().equals(DetailType.PERCENT)) {
+				str.append(" [" + td.getPercentage() + "% of field " + td.getPercentageField() + ":"
+						+ td.getPercentageValue() + "]");
 			} else {
 				str.append(" [count]");
 			}
 			Map<String, String> nObject = new HashMap<String, String>();
 			nObject.put(Constants.ALERT_LEVEL, Constants.WARNING);
 			if ((field.getBeanProperty() != null) && (field.getBeanProperty() != "")) {
-				nObject.put(Constants.THREAD, field.getBeanProperty() + ":" + tDetail.getField());
+				nObject.put(Constants.THREAD, field.getBeanProperty() + ":" + td.getField());
 			} else {
-				nObject.put(Constants.THREAD, bean.getMxBeanName().toString() + ":" + tDetail.getField());
+				nObject.put(Constants.THREAD, bean.getMxBeanName().toString() + ":" + td.getField());
 			}
 			nObject.put(Constants.TID, Constants.THRESHOLD_MESSAGE);
 			Notification notification = new Notification(Constants.ALERT, Constants.SOURCE, 0L, new Date().getTime(),
@@ -1040,13 +1118,12 @@ public abstract class MonitorImpl implements Monitor {
 	 * @param percent
 	 * @return
 	 */
-	private ThresholdDetail checkThreshold(AttributeList attributes, int count, BigDecimal percent,
-			FieldSizeType fieldType, FieldSizeType percentFieldType) {
+	private ThresholdDetail checkThreshold(MxBean bean, Field field, AttributeList attributes) {
 		double l1 = 0;
 		double l2 = 0;
 		Attribute attribute = null;
 		try {
-			double cnt = Double.valueOf(String.valueOf(count));
+			double cnt = Double.valueOf(String.valueOf(field.getCount()));
 			attribute = (Attribute) attributes.get(0);
 			l1 = Double.valueOf(String.valueOf(attribute.getValue()));
 			if (attributes.size() == 2) {
@@ -1062,27 +1139,28 @@ public abstract class MonitorImpl implements Monitor {
 				if (l1 == -1)
 					l1 = 0;
 
-				if (fieldType != null) {
-					if (FieldSizeType.MEGABYTES.equals(fieldType)) {
+				if (field.getFieldSize() != null) {
+					if (FieldSizeType.MEGABYTES.equals(field.getFieldSize())) {
 						l1 = (l1 * 1000000);
-					} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
+					} else if (FieldSizeType.KILOBYTES.equals(field.getFieldSize())) {
 						l1 = (l1 * 1000);
 					}
 				}
 
-				if (percentFieldType != null) {
-					if (FieldSizeType.MEGABYTES.equals(percentFieldType)) {
+				if (field.getPercentageField() != null) {
+					if (FieldSizeType.MEGABYTES.equals(field.getPercentageField())) {
 						l2 = (l2 * 1000000);
-					} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
+					} else if (FieldSizeType.KILOBYTES.equals(field.getPercentageField())) {
 						l2 = (l2 * 1000);
 					}
 				}
 
-				double result = percent.multiply(new BigDecimal(l2)).doubleValue();
+				double result = field.getPercentage().multiply(new BigDecimal(l2)).doubleValue();
 				if (l1 > result) {
 					Attribute attr1 = (Attribute) attributes.get(0);
 					Attribute attr2 = (Attribute) attributes.get(1);
-					return new ThresholdDetail(l1, result, attr1.getName(), percent, attr2.getName(), l2);
+					return new ThresholdDetail(bean.getMxBeanName().name(), field.getBeanProperty(), l1, result,
+							attr1.getName(), field.getPercentage(), attr2.getName(), l2);
 				}
 				return null;
 			} else {
@@ -1090,17 +1168,18 @@ public abstract class MonitorImpl implements Monitor {
 				if (l1 == -1)
 					l1 = 0;
 
-				if (fieldType != null) {
-					if (FieldSizeType.MEGABYTES.equals(fieldType)) {
+				if (field.getFieldSize() != null) {
+					if (FieldSizeType.MEGABYTES.equals(field.getFieldSize())) {
 						l1 = (l1 * 1000000);
-					} else if (FieldSizeType.KILOBYTES.equals(percentFieldType)) {
+					} else if (FieldSizeType.KILOBYTES.equals(field.getFieldSize())) {
 						l1 = (l1 * 1000);
 					}
 				}
 
 				if (l1 > cnt) {
 					Attribute attr1 = (Attribute) attributes.get(0);
-					return new ThresholdDetail(l1, cnt, attr1.getName());
+					return new ThresholdDetail(bean.getMxBeanName().name(), field.getBeanProperty(), l1, cnt,
+							attr1.getName());
 				}
 			}
 		} catch (Exception e) {
@@ -1467,5 +1546,21 @@ public abstract class MonitorImpl implements Monitor {
 
 	public void setHealthCheck(boolean healthCheck) {
 		this.healthCheck = healthCheck;
+	}
+
+	public int getThresholdAlertCount() {
+		return thresholdAlertCount;
+	}
+
+	public void setThresholdAlertCount(int thresholdAlertCount) {
+		this.thresholdAlertCount = thresholdAlertCount;
+	}
+
+	public long getThresholdAlertTtl() {
+		return thresholdAlertTtl;
+	}
+
+	public void setThresholdAlertTtl(long thresholdAlertTtl) {
+		this.thresholdAlertTtl = thresholdAlertTtl;
 	}
 }

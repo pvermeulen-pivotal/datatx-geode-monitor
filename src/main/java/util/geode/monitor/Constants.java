@@ -75,6 +75,8 @@ public class Constants {
 	public static final String P_MAX_DUPS = "maximum-duplicates";
 	public static final String P_RECONNECT_W_TIME = "reconnect-wait-time";
 	public static final String P_RECONNECT_R_ATTEMPTS = "reconnect-retry-attempts";
+	public static final String P_THRESHOLD_ALERT_CNT = "threshold-alert-count";
+	public static final String P_THRESHOLD_ALERT_TTL = "threshold-alert-ttl";
 	public static final String P_HEALTH_CHK = "health-check-enabled";
 	public static final String P_HEALTH_CHK_INT = "health-check-interval";
 	public static final String E_HOST = "host name must be set.";
