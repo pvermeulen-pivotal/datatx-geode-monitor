@@ -61,8 +61,8 @@ public class Constants {
 	public static final String M_JMX_OPENED = "jmx.remote.connection.opened";
 	public static final String M_JMX_MGR_DEPARTED = "JMX Manager has left the distributed system";
 	public static final String M_JMX_MGR_JOINED = "JMX Manager has rejoined the distributed system";
-	public static final String M_JMX_MGR_OPENED = "JMX Manager Connection opened";
-	public static final String M_MON_MGR_LEFT = "Monitor has left the distributed system";
+	public static final String M_JMX_MGR_OPENED = "JMX Manager connection opened";
+	public static final String M_MON_MGR_LEFT = "Monitor was shutdown and has left the distributed system";
 	public static final String M_MON_MGR_NEW = "Monitor connected to another JMX manager ";
 	public static final String M_MEMBER_JOINED = "New member has joined distributed system";
 	public static final String M_MEMBER_LEFT = "Member has left the distributed system";
@@ -79,6 +79,7 @@ public class Constants {
 	public static final String P_THRESHOLD_ALERT_TTL = "threshold-alert-ttl";
 	public static final String P_HEALTH_CHK = "health-check-enabled";
 	public static final String P_HEALTH_CHK_INT = "health-check-interval";
+	public static final String P_SPECIAL_MSG_DURATION = "special-message-duration";
 	public static final String E_HOST = "host name must be set.";
 	public static final String E_PORT = "port must be an integer between zero and 65535.";
 	public static final String E_COMMAND_PORT = "command port must be an integer between zero and 65535.";

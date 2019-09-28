@@ -29,6 +29,8 @@ import util.geode.monitor.ThresholdDetail;
 import util.geode.monitor.ThresholdDetail.DetailType;
 import util.geode.monitor.Util;
 import util.geode.monitor.log.LogMessage;
+import util.geode.monitor.log.LogMessageWrapper;
+import util.geode.monitor.log.LogMessageWrappers;
 import util.geode.monitor.xml.ExcludedMessage;
 import util.geode.monitor.xml.ExcludedMessageObjectFactory;
 import util.geode.monitor.xml.ExcludedMessages;
@@ -68,14 +70,19 @@ public abstract class MonitorImpl implements Monitor {
 	private JMXServiceURL url = null;
 	private Thread thresholdThread;
 	private Thread healthCheckThread;
+	private Thread specialMessageThread;
 	private List<String> jmxHosts = new ArrayList<String>();
 	private List<LogMessage> messages = new ArrayList<LogMessage>();
 	private List<ThresholdDetail> thresholdDetails = new ArrayList<ThresholdDetail>();
+	private LogMessageWrappers logMessageWrappers;
 
-	private long messageLifeDuration = 60000 * 15;
-	private long reconnectWaitTime = 60;
-	private long healthCheckInterval = (10 * 60) * 1000;
-	private long thresholdAlertTtl = (2 * 60) * 1000;
+	private long messageLifeDuration = (15 * 60) * 1000; // default 15 mins
+	private long reconnectWaitTime = 60; // default 60 secs
+	private long healthCheckInterval = (10 * 60) * 1000; // default 10 minutes
+	private long thresholdAlertTtl = (2 * 60) * 1000; // default 2 mins
+	private long specialMessageDuration = (5 * 60) * 1000; // default 5 mins
+	private long defaultSleepTime = (5 * 60) * 1000; // default 5 mins
+
 	private String jmxHost;
 	private String site;
 	private String environment;
@@ -102,13 +109,10 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	public boolean isAttachedToManager() {
 		try {
-			Thread.sleep(1000);
-			jmxConnection.getConnectionId();
+			getJmxConnection().getConnectionId();
 		} catch (IOException e) {
 			setJmxConnectionActive(false);
 			return false;
-		} catch (InterruptedException e) {
-			// do nothing
 		}
 		return getJmxConnectionActive();
 	}
@@ -121,13 +125,15 @@ public abstract class MonitorImpl implements Monitor {
 	 * @throws RuntimeException
 	 */
 	public void initialize() throws RuntimeException {
-		util = new Util();
+		setUtil(new Util());
 
 		try {
 			loadMonitorProps();
 		} catch (Exception e) {
 			throw new RuntimeException("(initialize) Error loading monitor properties Exception: " + e.getMessage());
 		}
+
+		this.logMessageWrappers = new LogMessageWrappers();
 
 		createLogAppender();
 
@@ -169,6 +175,10 @@ public abstract class MonitorImpl implements Monitor {
 	@SuppressWarnings("unchecked")
 	public void start() {
 		if (!connect()) {
+			setReconnectRetryCount(getReconnectRetryCount() + 1);
+			buildSpecialLogMessage("JMX Agent:" + Constants.M_JMX_FAILED, Constants.MAJOR, new Date().getTime(),
+					getJmxHost());
+
 			if (getAgentStartTimer() == null) {
 				setAgentStartTimer((ScheduledFuture<AgentMonitorTask>) getScheduleExecutor()
 						.schedule(new AgentMonitorTask(), getReconnectWaitTime(), TimeUnit.SECONDS));
@@ -179,6 +189,7 @@ public abstract class MonitorImpl implements Monitor {
 				}
 			}
 		} else {
+			buildSpecialLogMessage(Constants.M_JMX_MGR_OPENED, Constants.CLEAR, new Date().getTime(), getJmxHost());
 			setLastJmxHost(getJmxHost());
 		}
 	}
@@ -210,13 +221,13 @@ public abstract class MonitorImpl implements Monitor {
 				} else {
 					setNextHostIndex(getNextHostIndex() + 1);
 				}
-				String urlString = "service:jmx:rmi://" + jmxHost + "/jndi/rmi://" + getJmxHost() + ":" + getJmxPort()
+				String urlString = "service:jmx:rmi://" + getJmxHost() + "/jndi/rmi://" + getJmxHost() + ":" + getJmxPort()
 						+ "/jmxrmi";
 
 				setUrl(new JMXServiceURL(urlString));
-				setJmxConnection(JMXConnectorFactory.connect(url));
+				setJmxConnection(JMXConnectorFactory.connect(getUrl()));
 				setSystemName(new ObjectName(Constants.DISTRIBUTED_SYSTEM_OBJECT_NAME));
-				setMbs(jmxConnection.getMBeanServerConnection());
+				setMbs(getJmxConnection().getMBeanServerConnection());
 				setConnectionListener(addConnectionNotificationListener());
 				getJmxConnection().addConnectionNotificationListener(getConnectionListener(), null, null);
 				setMbsListener(addGemFireNotificationListener());
@@ -256,13 +267,13 @@ public abstract class MonitorImpl implements Monitor {
 
 		changeLogLevel();
 
-		setServers((String[]) getUtil().getNames(mbs, systemName, Constants.ListType.SERVERS));
+		setServers((String[]) getUtil().getNames(getMbs(), getSystemName(), Constants.ListType.SERVERS));
 		setMembers(new ObjectName[getServers().length]);
 		for (i = 0; i < getServers().length; i++) {
-			setMember(getUtil().getObjectName(mbs, systemName, Constants.ObjectNameType.MEMBER, getServer(i), null), i);
+			setMember(getUtil().getObjectName(getMbs(), getSystemName(), Constants.ObjectNameType.MEMBER, getServer(i), null), i);
 		}
 
-		setCacheServers(getUtil().getObjectNames(mbs, systemName, Constants.ObjectNameType.CACHE_SERVERS));
+		setCacheServers(getUtil().getObjectNames(getMbs(), getSystemName(), Constants.ObjectNameType.CACHE_SERVERS));
 
 		if (getMxBeans() != null) {
 			for (MxBean mxBean : getMxBeans().getMxBean()) {
@@ -271,7 +282,7 @@ public abstract class MonitorImpl implements Monitor {
 				case DISTRIBUTED_REGION_MX_BEAN:
 					setDistributedRegions(new ObjectName[mxBean.getFields().getField().size()]);
 					for (MxBeans.MxBean.Fields.Field field : mxBean.getFields().getField()) {
-						setDistributedRegion(getUtil().getObjectName(mbs, systemName,
+						setDistributedRegion(getUtil().getObjectName(getMbs(), getSystemName(),
 								Constants.ObjectNameType.REGION_DIST, field.getBeanProperty(), null), j);
 						j++;
 					}
@@ -279,7 +290,7 @@ public abstract class MonitorImpl implements Monitor {
 				case DISTRIBUTED_LOCK_SERVICE_MX_BEAN:
 					setDistributedLocks(new ObjectName[mxBean.getFields().getField().size()]);
 					for (MxBeans.MxBean.Fields.Field field : mxBean.getFields().getField()) {
-						setDistributedLock(getUtil().getObjectName(mbs, systemName, Constants.ObjectNameType.LOCK_DIST,
+						setDistributedLock(getUtil().getObjectName(getMbs(), getSystemName(), Constants.ObjectNameType.LOCK_DIST,
 								field.getBeanProperty(), null), j);
 						j++;
 					}
@@ -289,14 +300,16 @@ public abstract class MonitorImpl implements Monitor {
 		}
 
 		if (getMxBeans() != null) {
-			thresholdThread = new Thread(new ThresholdMonitorTask(), Constants.THRESHOLD_MON);
-			thresholdThread.start();
+			setThresholdThread(new Thread(new ThresholdMonitorTask(), Constants.THRESHOLD_MON));			
+			getThresholdThread().start();
 		}
 
 		if (isHealthCheck()) {
-			healthCheckThread = new Thread(new HealthCheckTask(), Constants.HEALTH_CHK_MON);
-			healthCheckThread.start();
+			setHealthCheckThread(new Thread(new HealthCheckTask(), Constants.HEALTH_CHK_MON));			
+			getHealthCheckThread().start();
 		}
+
+		setSpecialMessageThread( new Thread(new SpecialMessageTask()));
 	}
 
 	/**
@@ -317,16 +330,21 @@ public abstract class MonitorImpl implements Monitor {
 		}
 
 		if (getMxBeans() != null) {
-			if (thresholdThread.isAlive()) {
-				thresholdThread.interrupt();
+			if (getThresholdThread().isAlive()) {
+				getThresholdThread().interrupt();
 			}
 		}
 
 		if (isHealthCheck()) {
-			if (healthCheckThread.isAlive()) {
-				healthCheckThread.interrupt();
+			if (getHealthCheckThread().isAlive()) {
+				getHealthCheckThread().interrupt();
 			}
 		}
+
+		if (getSpecialMessageThread().isAlive()) {
+			getSpecialMessageThread().interrupt();
+		}
+
 	}
 
 	/**
@@ -350,28 +368,28 @@ public abstract class MonitorImpl implements Monitor {
 								"(handleConnectionNotification) " + notification.getMessage(),
 								notification.getUserData());
 
-						if (!shutdown) {
+						if (!isShutdown()) {
 							if ((notification.getMessage().contains(Constants.M_JMX_CONNECT_EXCEPTION))
 									|| (notification.getMessage().contains(Constants.M_JMX_SERVER_FAILED))) {
 
 								closeConnections();
 
-								buildSpecialLogMessage(jmxHost + " : " + Constants.M_JMX_MGR_DEPARTED, Constants.MAJOR,
-										notification.getTimeStamp(), jmxHost);
+								buildSpecialLogMessage(getJmxHost()+ " : " + Constants.M_JMX_MGR_DEPARTED, Constants.MAJOR,
+										notification.getTimeStamp(), getJmxHost());
 
-								if (jmxHosts.size() > 1) {
+								if (getJmxHosts().size() > 1) {
 									connectTime = 5L;
 								} else {
 									connectTime = getReconnectWaitTime();
 								}
 
-								if (agentStartTimer == null) {
-									agentStartTimer = (ScheduledFuture<AgentMonitorTask>) getScheduleExecutor()
-											.schedule(new AgentMonitorTask(), connectTime, TimeUnit.SECONDS);
+								if (getAgentStartTimer() == null) {
+									setAgentStartTimer((ScheduledFuture<AgentMonitorTask>) getScheduleExecutor()
+											.schedule(new AgentMonitorTask(), connectTime, TimeUnit.SECONDS));
 								} else {
-									if (agentStartTimer.isDone()) {
-										agentStartTimer = (ScheduledFuture<AgentMonitorTask>) getScheduleExecutor()
-												.schedule(new AgentMonitorTask(), connectTime, TimeUnit.SECONDS);
+									if (getAgentStartTimer().isDone()) {
+										setAgentStartTimer((ScheduledFuture<AgentMonitorTask>) getScheduleExecutor()
+												.schedule(new AgentMonitorTask(), connectTime, TimeUnit.SECONDS));
 									}
 								}
 							}
@@ -456,8 +474,8 @@ public abstract class MonitorImpl implements Monitor {
 	 * @return boolean
 	 */
 	private boolean isBlocked(String blockId) {
-		if (blockers != null && blockers.length > 0) {
-			for (String blocker : blockers) {
+		if (getBlockers() != null && getBlockers().length > 0) {
+			for (String blocker : getBlockers()) {
 				if (blocker.equals(blockId))
 					return true;
 			}
@@ -471,7 +489,7 @@ public abstract class MonitorImpl implements Monitor {
 	 * @throws Exception
 	 */
 	private void changeLogLevel() throws Exception {
-		util.invokePutValue(mbs, getSystemName(), Constants.ALERT_LEVEL_CHANGE,
+		getUtil().invokePutValue(getMbs(), getSystemName(), Constants.ALERT_LEVEL_CHANGE,
 				new Object[] { Constants.WARNING.toLowerCase() }, new String[] { String.class.getName() });
 	}
 
@@ -511,6 +529,14 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private void buildSpecialLogMessage(String message, String level, long timeStamp, String member) {
 		LogMessage logMessage = getUtil().buildSpecialLogMessage(message, level, timeStamp, member);
+		LogMessageWrapper lmw = getLogMessageWrappers().getWrapper(logMessage);
+		if (lmw != null) {
+			lmw.setTimeStamp(new Date().getTime());
+			getLogMessageWrappers().updateWrapper(lmw);
+			writeLog(logMessage);
+			return;
+		}
+		getLogMessageWrappers().addWrapper(new LogMessageWrapper(logMessage, new Date().getTime()));
 		sendAlert(logMessage, getApplicationLog());
 		writeLog(logMessage);
 	}
@@ -529,7 +555,7 @@ public abstract class MonitorImpl implements Monitor {
 		logMessage.setBody(notification.getMessage());
 		if (validMessage(logMessage)) {
 			if (!checkForDuplicateMessage(logMessage)) {
-				messages.add(logMessage);
+				getMessages().add(logMessage);
 				sendAlert(logMessage, getApplicationLog());
 				writeLog(logMessage);
 			}
@@ -545,7 +571,7 @@ public abstract class MonitorImpl implements Monitor {
 	 * @param user
 	 */
 	private void log(String logType, String member, String message, Object user) {
-		util.log(getApplicationLog(), logType, member, message, user, getCluster(), getSite(), getEnvironment());
+		getUtil().log(getApplicationLog(), logType, member, message, user, getCluster(), getSite(), getEnvironment());
 	}
 
 	/**
@@ -555,7 +581,7 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private void writeLog(LogMessage logMessage) {
 		StringBuilder str = new StringBuilder();
-		str.append(util.getLoggingHeader(getCluster(), getSite(), getEnvironment()));
+		str.append(getUtil().getLoggingHeader(getCluster(), getSite(), getEnvironment()));
 		str.append(" | " + logMessage.getHeader().getDate() + " " + logMessage.getHeader().getTime());
 		str.append(" | " + logMessage.getHeader().getSeverity());
 		str.append(" | " + logMessage.getHeader().getMember());
@@ -586,7 +612,7 @@ public abstract class MonitorImpl implements Monitor {
 	 * @return
 	 */
 	private boolean checkForDuplicateMessage(LogMessage message) {
-		for (LogMessage logMessage : messages) {
+		for (LogMessage logMessage : getMessages()) {
 			if (logMessage.getHeader().getSeverity().equals(message.getHeader().getSeverity())
 					&& logMessage.getHeader().getMember().equals(message.getHeader().getMember())) {
 				if (!logMessage.getHeader().getEvent().equals(message.getHeader().getEvent())) {
@@ -598,7 +624,7 @@ public abstract class MonitorImpl implements Monitor {
 				}
 				if (logMessage.getBody().equals(message.getBody())) {
 					logMessage.setCount(logMessage.getCount() + 1);
-					if (logMessage.getCount() > messageDuplicateLimit) {
+					if (logMessage.getCount() > getMessageDuplicateLimit()) {
 						return true;
 					}
 				} else {
@@ -641,7 +667,7 @@ public abstract class MonitorImpl implements Monitor {
 	 */
 	private boolean validMessage(LogMessage logMessage) {
 		boolean result = true;
-		for (ExcludedMessage message : excludedMessages.getExcludedMessageList()) {
+		for (ExcludedMessage message : getExcludedMessages().getExcludedMessageList()) {
 			result = getUtil().validateCriteria(logMessage, message);
 			if (!result)
 				break;
@@ -656,20 +682,20 @@ public abstract class MonitorImpl implements Monitor {
 	private void removeOldMessages() {
 		List<LogMessage> newMessages = new ArrayList<LogMessage>();
 		long dateTimeNow = new Date().getTime();
-		for (LogMessage logMessage : messages) {
+		for (LogMessage logMessage : getMessages()) {
 			SimpleDateFormat sdf = new SimpleDateFormat(Constants.DATE_TIME_FORMAT);
 			try {
 				Date messageDate = sdf.parse(logMessage.getHeader().getDate() + " " + logMessage.getHeader().getTime());
 				long msgDate = messageDate.getTime();
 				msgDate = (dateTimeNow - msgDate);
-				if (msgDate < messageLifeDuration) {
+				if (msgDate < getMessageLifeDuration()) {
 					newMessages.add(logMessage);
 				}
 			} catch (ParseException e) {
 				newMessages.add(logMessage);
 			}
 		}
-		messages = newMessages;
+		setMessages(newMessages);
 		newMessages = null;
 		return;
 	}
@@ -698,7 +724,7 @@ public abstract class MonitorImpl implements Monitor {
 				addJmxHost(str);
 			}
 		} else {
-			split = jmxHost.split(" ");
+			split = getJmxHost().split(" ");
 			if (split.length > 0) {
 				for (String str : split) {
 					addJmxHost(str);
@@ -708,7 +734,7 @@ public abstract class MonitorImpl implements Monitor {
 
 		setNextHostIndex(1);
 		if (getJmxHosts().size() == 0) {
-			addJmxHost(jmxHost);
+			addJmxHost(getJmxHost());
 		}
 
 		if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_PORT))) {
@@ -781,8 +807,15 @@ public abstract class MonitorImpl implements Monitor {
 			if (monitorProps.getProperty(Constants.P_HEALTH_CHK_INT) != null) {
 				if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_HEALTH_CHK_INT))) {
 					lValue = Long.parseLong(monitorProps.getProperty(Constants.P_HEALTH_CHK_INT));
-					healthCheckInterval = (lValue * 60) * 1000;
+					setHealthCheckInterval((lValue * 60) * 1000);
 				}
+			}
+		}
+
+		if (monitorProps.getProperty(Constants.P_SPECIAL_MSG_DURATION) != null) {
+			if (StringUtils.isNumeric(monitorProps.getProperty(Constants.P_SPECIAL_MSG_DURATION))) {
+				lValue = Long.parseLong(monitorProps.getProperty(Constants.P_SPECIAL_MSG_DURATION));
+				setSpecialMessageDuration((lValue * 60) * 1000);
 			}
 		}
 	}
@@ -797,7 +830,7 @@ public abstract class MonitorImpl implements Monitor {
 		public void run() {
 			if (!connect()) {
 				agentStartTimer = (ScheduledFuture<AgentMonitorTask>) getScheduleExecutor()
-						.schedule(new AgentMonitorTask(), reconnectWaitTime, TimeUnit.SECONDS);
+						.schedule(new AgentMonitorTask(), getReconnectWaitTime(), TimeUnit.SECONDS);
 				setReconnectRetryCount(getReconnectRetryCount() + 1);
 				if (getReconnectRetryCount() > getReconnectRetryAttempts()) {
 					setReconnectRetryCount(0);
@@ -955,9 +988,9 @@ public abstract class MonitorImpl implements Monitor {
 				oName = new ObjectName(name);
 
 			} else {
-				oName = getUtil().getObjectName(mbs, systemName, type, server, field.getBeanProperty());
+				oName = getUtil().getObjectName(getMbs(), getSystemName(), type, server, field.getBeanProperty());
 			}
-			AttributeList attrList = getUtil().getAttributes(mbs, oName, attributes);
+			AttributeList attrList = getUtil().getAttributes(getMbs(), oName, attributes);
 			if (percentFieldValue) {
 				attrList.add(new Attribute(field.getFieldName() + "-constant", field.getPercentageField()));
 			}
@@ -991,7 +1024,7 @@ public abstract class MonitorImpl implements Monitor {
 				attributes[0] = field.getFieldName();
 				attributes[1] = field.getPercentageField();
 			}
-			AttributeList attrList = getUtil().getAttributes(mbs, oName, attributes);
+			AttributeList attrList = getUtil().getAttributes(getMbs(), oName, attributes);
 			if (percentFieldValue) {
 				attrList.add(new Attribute(field.getFieldName() + "-constant", field.getPercentageField()));
 			}
@@ -1013,18 +1046,18 @@ public abstract class MonitorImpl implements Monitor {
 	 * @return
 	 */
 	private ThresholdDetail checkForThresholdDetailAlert(ThresholdDetail tDetail) {
-		for (int i = 0; i < thresholdDetails.size(); i++) {
-			if (thresholdDetails.get(i).getBeanName().equals(tDetail.getBeanName())
-					&& thresholdDetails.get(i).getBeanProperty().equals(tDetail.getBeanProperty())
-					&& thresholdDetails.get(i).getField().equals(tDetail.getField())
-					&& thresholdDetails.get(i).getType().equals(tDetail.getType())) {
-				thresholdDetails.get(i).setThresholdCount(thresholdDetails.get(i).getThresholdCount() + 1);
-				tDetail.setThresholdCount(thresholdDetails.get(i).getThresholdCount());
-				thresholdDetails.set(i, tDetail);
-				if (thresholdDetails.get(i).getThresholdCount() > thresholdAlertCount) {
-					thresholdDetails.get(i).setSendAlert(true);
+		for (int i = 0; i < getThresholdDetails().size(); i++) {
+			if (getThresholdDetails().get(i).getBeanName().equals(tDetail.getBeanName())
+					&& getThresholdDetails().get(i).getBeanProperty().equals(tDetail.getBeanProperty())
+					&& getThresholdDetails().get(i).getField().equals(tDetail.getField())
+					&& getThresholdDetails().get(i).getType().equals(tDetail.getType())) {
+				getThresholdDetails().get(i).setThresholdCount(getThresholdDetails().get(i).getThresholdCount() + 1);
+				tDetail.setThresholdCount(getThresholdDetails().get(i).getThresholdCount());
+				getThresholdDetails().set(i, tDetail);
+				if (getThresholdDetails().get(i).getThresholdCount() > getThresholdAlertCount()) {
+					getThresholdDetails().get(i).setSendAlert(true);
 				}
-				return thresholdDetails.get(i);
+				return getThresholdDetails().get(i);
 			}
 		}
 		return null;
@@ -1036,15 +1069,15 @@ public abstract class MonitorImpl implements Monitor {
 	 * Checks for expired threshold ttls and remove expired threshold
 	 */
 	private void checkForExpiredThresholds() {
-		if (!thresholdDetails.isEmpty()) {
+		if (!getThresholdDetails().isEmpty()) {
 			List<ThresholdDetail> tds = new ArrayList<ThresholdDetail>();
 			long tm = new Date().getTime();
-			for (ThresholdDetail td : thresholdDetails) {
-				if (((td.getThresholdTm() + thresholdAlertTtl) > tm) && !td.isSendAlert()) {
+			for (ThresholdDetail td : getThresholdDetails()) {
+				if (((td.getThresholdTm() + getThresholdAlertTtl()) > tm) && !td.isSendAlert()) {
 					tds.add(td);
 				}
 			}
-			thresholdDetails = tds;
+			setThresholdDetails(tds);
 		}
 	}
 
@@ -1065,7 +1098,7 @@ public abstract class MonitorImpl implements Monitor {
 			ThresholdDetail td = checkForThresholdDetailAlert(tDetail);
 			if (td == null) {
 				tDetail.setThresholdCount(1);
-				thresholdDetails.add(tDetail);
+				getThresholdDetails().add(tDetail);
 				return;
 			} else {
 				if (!td.isSendAlert()) {
@@ -1196,13 +1229,13 @@ public abstract class MonitorImpl implements Monitor {
 	private class ThresholdMonitorTask extends Thread {
 
 		public void run() {
-			while (!shutdown) {
+			while (!isShutdown()) {
 				try {
-					Thread.sleep(mxBeans.getSampleTime());
+					Thread.sleep(getMxBeans().getSampleTime());
 					if (getJmxConnectionActive())
 						processMbeans();
 				} catch (InterruptedException e) {
-					// do nothing
+					break;
 				}
 			}
 		}
@@ -1213,15 +1246,15 @@ public abstract class MonitorImpl implements Monitor {
 	 * 
 	 */
 	private class HealthCheckTask extends Thread {
-		HealthCheckImpl healthCheck = new HealthCheckImpl(mbs, systemName, applicationLog, util, cluster, site,
-				environment);
+		HealthCheckImpl healthCheckImpl = new HealthCheckImpl(getMbs(), getSystemName(), getApplicationLog(), getUtil(), getCluster(), getSite(),
+				getEnvironment());
 
 		public void run() {
-			while (!shutdown) {
+			while (!isShutdown()) {
 				try {
-					Thread.sleep(healthCheckInterval);
+					Thread.sleep(getHealthCheckInterval());
 					if (getJmxConnectionActive()) {
-						List<LogMessage> logMessages = healthCheck.doHealthCheck(getCmdbHealth(getApplicationLog()));
+						List<LogMessage> logMessages = healthCheckImpl.doHealthCheck(getCmdbHealth(getApplicationLog()));
 						if (logMessages != null) {
 							for (LogMessage lm : logMessages) {
 								sendAlert(lm, getApplicationLog());
@@ -1229,7 +1262,28 @@ public abstract class MonitorImpl implements Monitor {
 						}
 					}
 				} catch (InterruptedException e) {
-					// do nothing
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * This class is used to spawn a thread for processing special messages
+	 * 
+	 */
+	private class SpecialMessageTask extends Thread {
+		public void run() {
+			while (!isShutdown()) {
+				try {
+					Thread.sleep(getDefaultSleepTime());
+					List<LogMessageWrapper> wrappers = getLogMessageWrappers()
+							.checkWrappers(getSpecialMessageDuration());
+					for (LogMessageWrapper wrapper : wrappers) {
+						getLogMessageWrappers().removeWrapper(wrapper);
+					}
+				} catch (InterruptedException e) {
+					break;
 				}
 			}
 		}
@@ -1503,6 +1557,10 @@ public abstract class MonitorImpl implements Monitor {
 		shutdown = stop;
 	}
 
+	public ExcludedMessages getExcludedMessages() {
+		return excludedMessages;
+	}
+
 	public void setExcludedMessages(ExcludedMessages messages) {
 		excludedMessages = messages;
 	}
@@ -1517,27 +1575,27 @@ public abstract class MonitorImpl implements Monitor {
 
 	public void addBlocker(String blockerId) {
 		List<String> lBlockers = null;
-		if (blockers == null || blockers.length == 0) {
+		if (getBlockers() == null || getBlockers().length == 0) {
 			lBlockers = new ArrayList<String>();
 		} else {
-			lBlockers = Arrays.asList(blockers);
+			lBlockers = Arrays.asList(getBlockers());
 		}
 		lBlockers.add(blockerId);
 		String[] aBlockers = new String[lBlockers.size()];
 		lBlockers.toArray(aBlockers);
-		blockers = aBlockers;
+		setBlockers(aBlockers);
 	}
 
 	public void removeBlocker(String blockerId) {
 		List<String> lBlockers = new ArrayList<String>();
-		for (String blocker : blockers) {
+		for (String blocker : getBlockers()) {
 			if (!blocker.equals(blockerId)) {
 				lBlockers.add(blocker);
 			}
 		}
 		String[] aBlockers = new String[lBlockers.size()];
 		lBlockers.toArray(aBlockers);
-		blockers = aBlockers;
+		setBlockers(aBlockers);
 	}
 
 	public boolean isHealthCheck() {
@@ -1562,5 +1620,105 @@ public abstract class MonitorImpl implements Monitor {
 
 	public void setThresholdAlertTtl(long thresholdAlertTtl) {
 		this.thresholdAlertTtl = thresholdAlertTtl;
+	}
+
+	public LogMessageWrappers getLogMessageWrappers() {
+		return logMessageWrappers;
+	}
+
+	public void setLogMessageWrappers(LogMessageWrappers logMessageWrapers) {
+		this.logMessageWrappers = logMessageWrapers;
+	}
+
+	public long getSpecialMessageDuration() {
+		return specialMessageDuration;
+	}
+
+	public void setSpecialMessageDuration(long specialMessageDuration) {
+		this.specialMessageDuration = specialMessageDuration;
+	}
+
+	public long getDefaultSleepTime() {
+		return defaultSleepTime;
+	}
+
+	public void setDefaultSleepTime(long defaultSleepTime) {
+		this.defaultSleepTime = defaultSleepTime;
+	}
+
+	public Thread getThresholdThread() {
+		return thresholdThread;
+	}
+
+	public void setThresholdThread(Thread thresholdThread) {
+		this.thresholdThread = thresholdThread;
+	}
+
+	public Thread getHealthCheckThread() {
+		return healthCheckThread;
+	}
+
+	public void setHealthCheckThread(Thread healthCheckThread) {
+		this.healthCheckThread = healthCheckThread;
+	}
+
+	public Thread getSpecialMessageThread() {
+		return specialMessageThread;
+	}
+
+	public void setSpecialMessageThread(Thread specialMessageThread) {
+		this.specialMessageThread = specialMessageThread;
+	}
+
+	public List<LogMessage> getMessages() {
+		return messages;
+	}
+
+	public void setMessages(List<LogMessage> messages) {
+		this.messages = messages;
+	}
+
+	public List<ThresholdDetail> getThresholdDetails() {
+		return thresholdDetails;
+	}
+
+	public void setThresholdDetails(List<ThresholdDetail> thresholdDetails) {
+		this.thresholdDetails = thresholdDetails;
+	}
+
+	public long getHealthCheckInterval() {
+		return healthCheckInterval;
+	}
+
+	public void setHealthCheckInterval(long healthCheckInterval) {
+		this.healthCheckInterval = healthCheckInterval;
+	}
+
+	public long getMessageLifeDuration() {
+		return messageLifeDuration;
+	}
+
+	public int getMessageDuplicateLimit() {
+		return messageDuplicateLimit;
+	}
+
+	public void setUtil(Util util) {
+		this.util = util;
+	}
+
+	public void setJmxConnectionActive(AtomicBoolean jmxConnectionActive) {
+		this.jmxConnectionActive = jmxConnectionActive;
+	}
+
+	public void setScheduleExecutor(ScheduledThreadPoolExecutor scheduleExecutor) {
+		this.scheduleExecutor = scheduleExecutor;
+	}
+
+	public void setJmxHosts(List<String> jmxHosts) {
+		this.jmxHosts = jmxHosts;
+	}
+
+	public void setBlockers(String[] blockers) {
+		this.blockers = blockers;
 	}
 }
