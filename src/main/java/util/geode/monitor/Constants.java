@@ -6,28 +6,28 @@ package util.geode.monitor;
  */
 public class Constants {
 
-	public static enum LogType {
+	public enum LogType {
 		FATAL, ERROR, WARNING, INFO
-	};
+	}
 
-	public static enum ListType {
+	public enum ListType {
 		MEMBERS, SERVERS, LOCATORS, REGIONS, REGION_PATHS, GROUPS, SENDERS, RECEIVERS
 	}
 
-	public static enum ObjectNameType { MEMBER, CACHE_SERVERS, GATEWAY_RECEIVERS, GATEWAY_SENDERS,
-		DISK_STORE, LOCK, LOCK_DIST, REGION, REGION_DIST, ASYNC_QUEUES };
-	
+	public enum ObjectNameType { MEMBER, CACHE_SERVERS, GATEWAY_RECEIVERS, GATEWAY_SENDERS,
+		DISK_STORE, LOCK, LOCK_DIST, REGION, REGION_DIST, ASYNC_QUEUES }
+
 	public static final String CRITICAL = "CRITICAL";
 	public static final String WARNING = "WARNING";
 	public static final String MAJOR = "MAJOR";
 	public static final String CLEAR = "CLEAR";
 	public static final String SEVERE = "SEVERE";
 	public static final String ERROR = "ERROR";
+	public static final String NOT_DEFINED = "Not Defined";
 	public static final String EXCLUDED_MESSAGE_FILE = "excludedMessages.xml";
 	public static final String GEMFIRE_THREAD_FILE = "gemfireThreads.xml";
 	public static final String MXBEAN_FILE = "mxbeans.xml";
-	public static final String MONITOR_PROPS = "monitor.properties";
-	public static final String HEALTH_PROPS = "health.properties";
+	public static final String HM_PROPS = "monitor.properties";
 	public static final String DATE_TIME_FORMAT = "yyyy/MM/dd HH:mm:ss:SSS";
 	public static final String DATE_FORMAT = "yyyy/MM/dd";
 	public static final String TIME_FORMAT = "HH:mm:ss:SSS";
@@ -37,6 +37,7 @@ public class Constants {
 	public static final String CRASHED = "gemfire.distributedsystem.cache.member.crashed";
 	public static final String SUSPECT = "gemfire.distributedsystem.cache.member.suspect";
 	public static final String ALERT = "system.alert";
+	public static final String ATTRIBUTE = "attribute";
 	public static final String OK = "OK";
 	public static final String INVALID_CMD = "INVALID COMMAND";
 	public static final String RUNNING = "RUNNING - NOT CONNECTED TO JMX MANAGER";
@@ -61,8 +62,8 @@ public class Constants {
 	public static final String M_JMX_OPENED = "jmx.remote.connection.opened";
 	public static final String M_JMX_MGR_DEPARTED = "JMX Manager has left the distributed system";
 	public static final String M_JMX_MGR_JOINED = "JMX Manager has rejoined the distributed system";
-	public static final String M_JMX_MGR_OPENED = "JMX Manager connection opened";
-	public static final String M_MON_MGR_LEFT = "Monitor was shutdown and has left the distributed system";
+	public static final String M_JMX_MGR_OPENED = "JMX Manager Connection opened";
+	public static final String M_MON_MGR_LEFT = "Monitor has left the distributed system";
 	public static final String M_MON_MGR_NEW = "Monitor connected to another JMX manager ";
 	public static final String M_MEMBER_JOINED = "New member has joined distributed system";
 	public static final String M_MEMBER_LEFT = "Member has left the distributed system";
@@ -75,11 +76,8 @@ public class Constants {
 	public static final String P_MAX_DUPS = "maximum-duplicates";
 	public static final String P_RECONNECT_W_TIME = "reconnect-wait-time";
 	public static final String P_RECONNECT_R_ATTEMPTS = "reconnect-retry-attempts";
-	public static final String P_THRESHOLD_ALERT_CNT = "threshold-alert-count";
-	public static final String P_THRESHOLD_ALERT_TTL = "threshold-alert-ttl";
-	public static final String P_HEALTH_CHK = "health-check-enabled";
-	public static final String P_HEALTH_CHK_INT = "health-check-interval";
-	public static final String P_SPECIAL_MSG_DURATION = "special-message-duration";
+	public static final String P_LOG_ATTR_TO_CONSOLE = "log-attributes-to-console";
+	public static final String P_LOG_ATTR_TO_LOG_FILE = "log-attributes-to-log-file";
 	public static final String E_HOST = "host name must be set.";
 	public static final String E_PORT = "port must be an integer between zero and 65535.";
 	public static final String E_COMMAND_PORT = "command port must be an integer between zero and 65535.";
@@ -89,7 +87,6 @@ public class Constants {
 	public static final String STATUS = "STATUS";
 	public static final String BLOCK = "BLOCK";
 	public static final String UNBLOCK = "UNBLOCK";
-	public static final String TLS = "TLS";
 	public static final String LIST_CACHE_SERVERS_OBJECTS = "listCacheServerObjectNames";
 	public static final String LIST_GATEWAY_SENDERS_OBJECTS = "listGatewaySenderObjectNames";
 	public static final String LIST_GATEWAY_RECEIVERS_OBJECTS = "listGatewayReceiverObjectNames";
@@ -111,10 +108,7 @@ public class Constants {
 	public static final String FETCH_GATEWAY_SENDER_OBJECT="fetchGatewaySenderObjectName";
 	public static final String ASYNC_OBJECT_NAME="GemFire:service=AsyncEventQueue,queue=qname,type=Member,member=mname";
 	public static final String THRESHOLD_MESSAGE="Threshold Exceeded";
+	public static final String ATTRIBUTES_MESSAGE="Attribute Name and Value";
+	public static final String BEAN_MESSAGE="MxBean";
 	public static final String SOURCE="MONITOR";
-	public static final String LOG4J_PROPS="log4j.properties";
-	public static final String APPL_LOG="applicationLog";
-	public static final String EXCP_LOG="exceptionLog";
-	public static final String THRESHOLD_MON="Threshold Monitor";
-	public static final String HEALTH_CHK_MON="Health Check";
 }

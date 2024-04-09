@@ -1,141 +1,51 @@
 
-h	java:S112…"FDefine and throw a dedicated exception instead of using a generic one.(ÌÔ¢Øüÿÿÿÿ8ï§ğ¦ì1
-c	java:S112"FDefine and throw a dedicated exception instead of using a generic one.(ÃÔ÷ı8ï§ğ¦ì1
-c	java:S112˜"FDefine and throw a dedicated exception instead of using a generic one.(ÃÔ÷ı8ï§ğ¦ì1
-h	java:S112£"FDefine and throw a dedicated exception instead of using a generic one.(›³”‹úÿÿÿÿ8ï§ğ¦ì1
-h	java:S112Î"FDefine and throw a dedicated exception instead of using a generic one.(×ŒÍøÿÿÿÿ8ï§ğ¦ì1
-h	java:S112ç"FDefine and throw a dedicated exception instead of using a generic one.(—Ç°…ùÿÿÿÿ8ï§ğ¦ì1
-h	java:S112ğ"FDefine and throw a dedicated exception instead of using a generic one.(ˆ¬«¬øÿÿÿÿ8ï§ğ¦ì1
-h	java:S112Ã"FDefine and throw a dedicated exception instead of using a generic one.(¿¦ËŒÿÿÿÿÿ8ğ§ğ¦ì1
-{
-java:S2293J"YReplace the type specification in this constructor call with the diamond operator ("<>").(ó–Áİıÿÿÿÿ8ò§ğ¦ì1
-v
-java:S2293K"YReplace the type specification in this constructor call with the diamond operator ("<>").(ôìæÖ8ó§ğ¦ì1
-{
-java:S2293L"YReplace the type specification in this constructor call with the diamond operator ("<>").(¤×™ôúÿÿÿÿ8ó§ğ¦ì1
-w
-java:S2293«"YReplace the type specification in this constructor call with the diamond operator ("<>").(œú¬8ó§ğ¦ì1
-w
-java:S2293±"YReplace the type specification in this constructor call with the diamond operator ("<>").(ÔõÜ8ó§ğ¦ì1
-|
-java:S2293á"YReplace the type specification in this constructor call with the diamond operator ("<>").(œóôËùÿÿÿÿ8ó§ğ¦ì1
-v
-java:S2293«"YReplace the type specification in this constructor call with the diamond operator ("<>").(‚Ò»58ô§ğ¦ì1
-v
-java:S2293¶"YReplace the type specification in this constructor call with the diamond operator ("<>").(ÄºƒL8ô§ğ¦ì1
 l
-java:S1192Â"IDefine a constant instead of duplicating this literal "Internal" 5 times.(£ÖŞ×şÿÿÿÿ8ô§ğ¦ì1
-e
-java:S1192é"GDefine a constant instead of duplicating this literal "member" 9 times.(Â‡±ñ8ô§ğ¦ì1
-t
-java:S1192­"VDefine a constant instead of duplicating this literal "(handleNotification) " 5 times.(ÙàÆç8ô§ğ¦ì1
-R
-java:S1066Í"/Merge this if statement with the enclosing one.(Ò¯Úèşÿÿÿÿ8õ§ğ¦ì1
-R
-java:S1066Ó"/Merge this if statement with the enclosing one.(ÖÖïÅúÿÿÿÿ8õ§ğ¦ì1
-M
-java:S1066Á"/Merge this if statement with the enclosing one.(‡ĞÇ³8õ§ğ¦ì1
-M
-java:S1066É"/Merge this if statement with the enclosing one.(‡ĞÇ³8ö§ğ¦ì1
-R
-java:S1066­"/Merge this if statement with the enclosing one.(Ä¹øÿÿÿÿ8ö§ğ¦ì1
-R
-java:S1066ø"/Merge this if statement with the enclosing one.(é¹Œüÿÿÿÿ8ö§ğ¦ì1
-M
-java:S1066§"/Merge this if statement with the enclosing one.(Ôñ™Ä8ö§ğ¦ì1
-R
-java:S1066¨"/Merge this if statement with the enclosing one.(Û¿è»ûÿÿÿÿ8ö§ğ¦ì1
-R
-java:S1066°"/Merge this if statement with the enclosing one.(Á´Şûÿÿÿÿ8ö§ğ¦ì1
+java:S1192ÿ"IDefine a constant instead of duplicating this literal "Internal" 3 times.(›§ºÿÿÿÿÿ8·¶§ì1
+j
+java:S1192"GDefine a constant instead of duplicating this literal "member" 6 times.(ÖÁ§«ÿÿÿÿÿ8·¶§ì1
+u
+java:S1192Æ"WDefine a constant instead of duplicating this literal "ThresholdMonitorTask: " 3 times.(ô¹Áî8·¶§ì1
 K
-java:S1604¥"(Make this anonymous inner class a lambda(¡ñîûÿÿÿÿ8÷§ğ¦ì1
-i
-java:S1301™"KReplace this "switch" statement by "if" statements to increase readability.(‘Ã±¸8ø§ğ¦ì1
-_
-java:S4973Ê"<Strings and Boxed types should be compared using "equals()".(Ãùÿÿÿÿ8ı§ğ¦ì1
-_
-java:S4973ã"<Strings and Boxed types should be compared using "equals()".(ü×ú¿üÿÿÿÿ8ı§ğ¦ì1
-b
-java:S2184O"FCast one of the operands of this multiplication operation to a "long".(é­»@8ÿ§ğ¦ì1
-h
-java:S2184Q"FCast one of the operands of this multiplication operation to a "long".(°‰ÿÿÿÿÿ8ÿ§ğ¦ì1
-h
-java:S2184R"FCast one of the operands of this multiplication operation to a "long".(ÏéşÔıÿÿÿÿ8ÿ§ğ¦ì1
-c
-java:S2184S"FCast one of the operands of this multiplication operation to a "long".(ì‹…ß8ÿ§ğ¦ì1
-h
-java:S2184T"FCast one of the operands of this multiplication operation to a "long".(ûÂ™üÿÿÿÿ8ÿ§ğ¦ì1
-U
-java:S1117Ê"7Rename "url" which hides the field declared at line 70.(Ü—½¿8Ù¬ğ¦ì1
+java:S1604Ë"(Make this anonymous inner class a lambda(¡ñîûÿÿÿÿ8»¶§ì1
+{
+java:S2142h"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ä ¹€8†Ê§ì1
 u
-java:S3776ˆ"RRefactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.(Ã²‘£ûÿÿÿÿ8ß¬ğ¦ì1
-N
-java:S1905"+Remove this unnecessary cast to "String[]".(«şÕïşÿÿÿÿ8ß¬ğ¦ì1
-v	java:S131™"YComplete cases by adding the missing enum constants or add a default case to this switch.(‘Ã±¸8á¬ğ¦ì1
-d
-java:S2438¯"AReplace "argument 1" of type Thread with an instance of Runnable.(ŠÊÓÆøÿÿÿÿ8ã¬ğ¦ì1
-d
-java:S2438´"AReplace "argument 1" of type Thread with an instance of Runnable.(ï®ÄÕûÿÿÿÿ8ä¬ğ¦ì1
-_
-java:S2438¸"AReplace "argument 1" of type Thread with an instance of Runnable.(¯ÑÑ8ä¬ğ¦ì1
+java:S3776"RRefactor this method to reduce its Cognitive Complexity from 39 to the 15 allowed.(‰ßıúÿÿÿÿ8²Ê§ì1
 u
-java:S3776ã"RRefactor this method to reduce its Cognitive Complexity from 39 to the 15 allowed.(‰ßıúÿÿÿÿ8ç¬ğ¦ì1
-9
-java:S3626–"Remove this redundant jump.(ûÁİ…8è¬ğ¦ì1
-u
-java:S3776£"RRefactor this method to reduce its Cognitive Complexity from 34 to the 15 allowed.(›³”‹úÿÿÿÿ8ë¬ğ¦ì1
-
-java:S1130£"lRemove the declaration of thrown exception 'java.lang.Exception', as it cannot be thrown from method's body.(›³”‹úÿÿÿÿ8ë¬ğ¦ì1
-L
-java:S1905Ë")Remove this unnecessary cast to "String".(¥İö ûÿÿÿÿ8ï¬ğ¦ì1
+java:S3776É"RRefactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.(÷¾Áıÿÿÿÿ8ÊÊ§ì1
+H	java:S106Í"+Replace this use of System.out by a logger.(¿Å¥í8ŞÊ§ì1
+M	java:S106Î"+Replace this use of System.out by a logger.(ùçõ¦øÿÿÿÿ8ßÊ§ì1
+H	java:S106Ï"+Replace this use of System.out by a logger.(¿Å¥í8ßÊ§ì1
 p
-java:S3776æ"RRefactor this method to reduce its Cognitive Complexity from 34 to the 15 allowed.(µÑª8ö¬ğ¦ì1
-y
-java:S3923ê"[Remove this conditional structure or edit its code blocks so that they're not all the same.(ÔÄÆ¢8ø¬ğ¦ì1
-b
-java:S1854»"?Remove this useless assignment to local variable "newMessages".(÷İèõÿÿÿÿÿ8û¬ğ¦ì1
-9
-java:S3626¼"Remove this redundant jump.(ûÁİ…8û¬ğ¦ì1
+java:S3776Á"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(µÑª8ëÊ§ì1
 u
-java:S3776Ã"RRefactor this method to reduce its Cognitive Complexity from 48 to the 15 allowed.(¿¦ËŒÿÿÿÿÿ8ş¬ğ¦ì1
-a
-java:S1155à">Use isEmpty() to check whether the collection is empty or not.(ÙÅàüÿÿÿÿ8„­ğ¦ì1
+java:S3776˜"RRefactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.(Š¤ßÿÿÿÿÿ8øÊ§ì1
 u
-java:S3776Ù"RRefactor this method to reduce its Cognitive Complexity from 84 to the 15 allowed.(Íòäûÿÿÿÿ8‹­ğ¦ì1
-c
-java:S1193¯"@Replace the usage of the "instanceof" operator by a catch block.(‡™˜ııÿÿÿÿ8­ğ¦ì1
-p
-java:S3776Å"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(Ş¨œº8™­ğ¦ì1
-p
-java:S3776‚	"RRefactor this method to reduce its Cognitive Complexity from 32 to the 15 allowed.(ú¹Ú¯8Ÿ­ğ¦ì1
-a
-java:S2130‡	">Use "Double.parseDouble" for this string-to-double conversion.(ó™ä×şÿÿÿÿ8 ­ğ¦ì1
-t
-java:S2159 	"VRemove this call to "equals"; comparisons between unrelated types always return false.(Ñ’—8¡­ğ¦ì1
-t
-java:S2159¢	"VRemove this call to "equals"; comparisons between unrelated types always return false.(×³êº8¢­ğ¦ì1
-D
-java:S2111§	"!Use "BigDecimal.valueOf" instead.(·£œ¤ÿÿÿÿÿ8¢­ğ¦ì1
-X
-java:S1161Ï	":Add the "@Override" annotation above this method signature(“–ış8§­ğ¦ì1
+java:S3776„"RRefactor this method to reduce its Cognitive Complexity from 73 to the 15 allowed.(™«¯ÿÿÿÿÿ8—Ë§ì1
+M	java:S106¸"+Replace this use of System.out by a logger.(²¡„ºùÿÿÿÿ8àË§ì1
+M	java:S106¹"+Replace this use of System.out by a logger.(¶ıúõşÿÿÿÿ8÷Ë§ì1
+u
+java:S3776„"RRefactor this method to reduce its Cognitive Complexity from 35 to the 15 allowed.(³â¼æúÿÿÿÿ8Ì§ì1
 |
-java:S2142Õ	"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ä ¹€8§­ğ¦ì1
-X
-java:S1161ä	":Add the "@Override" annotation above this method signature(“–ış8©­ğ¦ì1
-|
-java:S2142ğ	"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ä ¹€8©­ğ¦ì1
-X
-java:S1161ü	":Add the "@Override" annotation above this method signature(“–ış8ª­ğ¦ì1
-|
-java:S2142…
-"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ä ¹€8ª­ğ¦ì1
+java:S2142Û"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(”ı¾8ÈÌ§ì1
 P
-java:S3398Ù"-Move this method into "ThresholdMonitorTask".(Íòäûÿÿÿÿ8µ­ğ¦ì1
+java:S3398„"-Move this method into "ThresholdMonitorTask".(™«¯ÿÿÿÿÿ8ÜÌ§ì1
 L
-java:S3398€")Move this method into "AgentMonitorTask".(µç²Âúÿÿÿÿ8µ­ğ¦ì1
+java:S3398Ë
+")Move this method into "AgentMonitorTask".(µç²Âúÿÿÿÿ8ÆÔ–§ì1
 G
-java:S3398ğ")Move this method into "AgentMonitorTask".(¾´ŠÏ8µ­ğ¦ì1
+java:S3398»
+")Move this method into "AgentMonitorTask".(¾´ŠÏ8ƒ’§ì1
+G
+java:S3398³
+")Move this method into "AgentMonitorTask".(ÜóÌË8ÜÌ§ì1
+J
+java:S1068F"(Remove this unused "site" private field.(”’ğøÿÿÿÿ8¾š±§ì1
+Q
+java:S1068G"/Remove this unused "environment" private field.(›Üåªúÿÿÿÿ8¾š±§ì1
+M
+java:S1068H"+Remove this unused "cluster" private field.(é˜±Ãúÿÿÿÿ8¾š±§ì1
 é
-java:S6541Ã"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 100 to 64, Complexity from 30 to 14, Nesting Level from 3 to 2, Number of Variables from 7 to 6.(¿¦ËŒÿÿÿÿÿ8™¯ğ¦ì1
+java:S6541„"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 69 to 64, Complexity from 33 to 14, Nesting Level from 4 to 2, Number of Variables from 11 to 6.(™«¯ÿÿÿÿÿ8İÌ§ì1
 é
-java:S6541Ù"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 95 to 64, Complexity from 36 to 14, Nesting Level from 5 to 2, Number of Variables from 13 to 6.(Íòäûÿÿÿÿ8™¯ğ¦ì1
+java:S6541„"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 65 to 64, Complexity from 18 to 14, Nesting Level from 4 to 2, Number of Variables from 14 to 6.(³â¼æúÿÿÿÿ8ŞÌ§ì1
