@@ -1,0 +1,78 @@
+
+c	java:S112–"FDefine and throw a dedicated exception instead of using a generic one.(ØĞÎ³8ù­ğ¦ì1
+b	java:S112›"FDefine and throw a dedicated exception instead of using a generic one.(¤ÒÅ:8ù­ğ¦ì1
+c	java:S112 "FDefine and throw a dedicated exception instead of using a generic one.(ØĞÎ³8ù­ğ¦ì1
+c	java:S112¥"FDefine and throw a dedicated exception instead of using a generic one.(ØĞÎ³8ù­ğ¦ì1
+b	java:S112ª"FDefine and throw a dedicated exception instead of using a generic one.(¤ÒÅ:8ù­ğ¦ì1
+c	java:S112¯"FDefine and throw a dedicated exception instead of using a generic one.(ØĞÎ³8ù­ğ¦ì1
+h	java:S112´"FDefine and throw a dedicated exception instead of using a generic one.(¸ñÿÿÿÿÿ8ù­ğ¦ì1
+L
+java:S1066_"/Merge this if statement with the enclosing one.(ã®š¯8ú­ğ¦ì1
+L
+java:S1066`"/Merge this if statement with the enclosing one.(³‘ù8ú­ğ¦ì1
+Q
+java:S1066|"/Merge this if statement with the enclosing one.(´‰¿ıÿÿÿÿ8ú­ğ¦ì1
+^	java:S107¹"<Method has 8 parameters, which is greater than 7 authorized.(Ñô Úúÿÿÿÿ8„¯ğ¦ì1
+o
+java:S3776A"RRefactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.(â˜Ö—8†¯ğ¦ì1
+…
+java:S1157N"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(Ìëô¥ûÿÿÿÿ8ˆ¯ğ¦ì1
+€
+java:S1157O"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(¨“¤­8ˆ¯ğ¦ì1
+
+java:S1157Q"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(êŒÁ58ˆ¯ğ¦ì1
+…
+java:S1157S"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(ş¼†Ëøÿÿÿÿ8ˆ¯ğ¦ì1
+…
+java:S1157V"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(Ø÷©Úşÿÿÿÿ8‰¯ğ¦ì1
+€
+java:S1157X"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(Ö½Â8‰¯ğ¦ì1
+
+java:S1157Z"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(§å±38Š¯ğ¦ì1
+…
+java:S1157w"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(–ø¿øùÿÿÿÿ8Œ¯ğ¦ì1
+€
+java:S1157{"cReplace these toUpperCase()/toLowerCase() and equals() calls with a single equalsIgnoreCase() call.(¨ªì½8Œ¯ğ¦ì1
+M
+java:S1905Ï"/Remove this unnecessary cast to "ObjectName[]".(ĞØã8¯ğ¦ì1
+R
+java:S1905Ò"/Remove this unnecessary cast to "ObjectName[]".(úÏÍ×ùÿÿÿÿ8¯ğ¦ì1
+M
+java:S1905Õ"/Remove this unnecessary cast to "ObjectName[]".(Ğ§‹û8¯ğ¦ì1
+D
+java:S1168Ú"&Return an empty array instead of null.(¥¹ï8‘¯ğ¦ì1
+I
+java:S1905á"+Remove this unnecessary cast to "String[]".(ñ©Ìã8’¯ğ¦ì1
+I
+java:S1905ã"+Remove this unnecessary cast to "String[]".(¾ß¸¢8’¯ğ¦ì1
+N
+java:S1905å"+Remove this unnecessary cast to "String[]".(é¹¦ƒûÿÿÿÿ8’¯ğ¦ì1
+I
+java:S1905è"+Remove this unnecessary cast to "String[]".(ÀßöÄ8’¯ğ¦ì1
+I
+java:S1905ê"+Remove this unnecessary cast to "String[]".(åÜ°õ8“¯ğ¦ì1
+N
+java:S1905ì"+Remove this unnecessary cast to "String[]".(ú¢Óùÿÿÿÿ8“¯ğ¦ì1
+N
+java:S1905î"+Remove this unnecessary cast to "String[]".(˜Œˆıÿÿÿÿ8“¯ğ¦ì1
+I
+java:S1905ğ"+Remove this unnecessary cast to "String[]".(’«‰›8“¯ğ¦ì1
+D
+java:S1168ò"&Return an empty array instead of null.(¥¹ï8“¯ğ¦ì1
+v	java:S131ø"YComplete cases by adding the missing enum constants or add a default case to this switch.(ÜŸ•8”¯ğ¦ì1
+K
+java:S1905ú"-Remove this unnecessary cast to "ObjectName".(€¶Şç8”¯ğ¦ì1
+K
+java:S1905ı"-Remove this unnecessary cast to "ObjectName".(¸Ä×ù8”¯ğ¦ì1
+P
+java:S1905€"-Remove this unnecessary cast to "ObjectName".(Á–¡ıÿÿÿÿ8•¯ğ¦ì1
+P
+java:S1905ƒ"-Remove this unnecessary cast to "ObjectName".(ğ„×–ıÿÿÿÿ8•¯ğ¦ì1
+K
+java:S1905†"-Remove this unnecessary cast to "ObjectName".(¢•âè8•¯ğ¦ì1
+P
+java:S1905‰"-Remove this unnecessary cast to "ObjectName".(Ò¨ˆÑûÿÿÿÿ8–¯ğ¦ì1
+J
+java:S1905Œ"-Remove this unnecessary cast to "ObjectName".(Í… ;8–¯ğ¦ì1
+K
+java:S1905"-Remove this unnecessary cast to "ObjectName".(¹üÔ“8–¯ğ¦ì1

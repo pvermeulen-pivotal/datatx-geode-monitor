@@ -1,0 +1,13 @@
+
+\
+java:S1118":Add a private constructor to hide the implicit public one.(“³±ûÿÿÿÿ8Ø­ğ¦ì1
+t
+java:S2786	"RRemove this redundant "static" qualifier; nested enum types are implicitly static.(½ç»†ıÿÿÿÿ8Ø­ğ¦ì1
+>
+java:S1116"Remove this empty statement.(ôŸìúÿÿÿÿ8Ù­ğ¦ì1
+o
+java:S2786"RRemove this redundant "static" qualifier; nested enum types are implicitly static.(œÃìâ8Ù­ğ¦ì1
+t
+java:S2786"RRemove this redundant "static" qualifier; nested enum types are implicitly static.(ËÏ¨ªúÿÿÿÿ8Ù­ğ¦ì1
+9
+java:S1116"Remove this empty statement.(ßÛÌá8Ù­ğ¦ì1
