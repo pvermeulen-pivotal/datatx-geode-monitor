@@ -16,6 +16,8 @@ java:S3776É"RRefactor this method to reduce its Cognitive Complexity from 24 t
 H	java:S106Í"+Replace this use of System.out by a logger.(¿Å¥í8ŞÊ§ì1
 M	java:S106Î"+Replace this use of System.out by a logger.(ùçõ¦øÿÿÿÿ8ßÊ§ì1
 H	java:S106Ï"+Replace this use of System.out by a logger.(¿Å¥í8ßÊ§ì1
+x
+java:S3038·"U"sendAlert" is defined in the "Monitor" interface and can be removed from this class.(·‘Ìÿÿÿÿÿ8ˆÖ†Àì1
 p
 java:S3776Á"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(µÑª8ëÊ§ì1
 u
@@ -31,20 +33,14 @@ java:S2142Û"^Either re-interrupt this method or rethrow the "InterruptedExcept
 P
 java:S3398„"-Move this method into "ThresholdMonitorTask".(™«¯ÿÿÿÿÿ8ÜÌ§ì1
 L
-java:S3398Ë
+java:S3398â
 ")Move this method into "AgentMonitorTask".(µç²Âúÿÿÿÿ8ÆÔ–§ì1
 G
-java:S3398»
+java:S3398Ò
 ")Move this method into "AgentMonitorTask".(¾´ŠÏ8ƒ’§ì1
 G
-java:S3398³
+java:S3398Ê
 ")Move this method into "AgentMonitorTask".(ÜóÌË8ÜÌ§ì1
-J
-java:S1068F"(Remove this unused "site" private field.(”’ğøÿÿÿÿ8¾š±§ì1
-Q
-java:S1068G"/Remove this unused "environment" private field.(›Üåªúÿÿÿÿ8¾š±§ì1
-M
-java:S1068H"+Remove this unused "cluster" private field.(é˜±Ãúÿÿÿÿ8¾š±§ì1
 é
 java:S6541„"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 69 to 64, Complexity from 33 to 14, Nesting Level from 4 to 2, Number of Variables from 11 to 6.(™«¯ÿÿÿÿÿ8İÌ§ì1
 é

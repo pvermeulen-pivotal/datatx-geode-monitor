@@ -1127,6 +1127,29 @@ public abstract class MonitorImpl implements Monitor {
         return scheduleExecutor;
     }
 
+    private String getSite() {
+        return site;
+    }
+
+    private void setSite(String site) {
+        this.site = site;
+    }
+
+    private String getEnvironment() {
+        return environment;
+    }
+
+    private void setEnvironment(String environment) {
+        this.environment = environment;
+    }
+
+    private String getCluster() {
+        return cluster;
+    }
+
+    private void setCluster(String cluster) {
+        this.cluster = cluster;
+    }
 
     private String[] getServers() {
         return servers;
