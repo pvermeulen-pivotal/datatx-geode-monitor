@@ -1,18 +1,11 @@
 
-c	java:S112¼"FDefine and throw a dedicated exception instead of using a generic one.(ØĞÎ³8›ùô¿ì1
-b	java:S112Á"FDefine and throw a dedicated exception instead of using a generic one.(¤ÒÅ:8›ùô¿ì1
-c	java:S112Æ"FDefine and throw a dedicated exception instead of using a generic one.(ØĞÎ³8›ùô¿ì1
-c	java:S112Ë"FDefine and throw a dedicated exception instead of using a generic one.(ØĞÎ³8›ùô¿ì1
-b	java:S112Ğ"FDefine and throw a dedicated exception instead of using a generic one.(¤ÒÅ:8›ùô¿ì1
-c	java:S112Õ"FDefine and throw a dedicated exception instead of using a generic one.(ØĞÎ³8›ùô¿ì1
-h	java:S112Ú"FDefine and throw a dedicated exception instead of using a generic one.(¸ñÿÿÿÿÿ8›ùô¿ì1
-h	java:S112ô"FDefine and throw a dedicated exception instead of using a generic one.(èİÎÑşÿÿÿÿ8ã¿ú¿ì1
-c	java:S112…"FDefine and throw a dedicated exception instead of using a generic one.(´Ÿ8îû¿ì1
-h	java:S112¨"FDefine and throw a dedicated exception instead of using a generic one.(¹µ¦Óúÿÿÿÿ8¿°ı¿ì1
-^	java:S107©"<Method has 8 parameters, which is greater than 7 authorized.(Ñô Úúÿÿÿÿ8úô¿ì1
+h	java:S112‹"FDefine and throw a dedicated exception instead of using a generic one.(èİÎÑşÿÿÿÿ8ã¿ú¿ì1
+c	java:S112œ"FDefine and throw a dedicated exception instead of using a generic one.(´Ÿ8îû¿ì1
+h	java:S112¾"FDefine and throw a dedicated exception instead of using a generic one.(¹µ¦Óúÿÿÿÿ8¿°ı¿ì1
+c	java:S112ò"FDefine and throw a dedicated exception instead of using a generic one.(‘úÏ·8”ÆúÀì1
 o
-java:S3776D"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(â˜Ö—8„úô¿ì1
+java:S37763"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(â˜Ö—8„úô¿ì1
 D
-java:S1168€"&Return an empty array instead of null.(¥¹ï8äÀú¿ì1
+java:S1168—"&Return an empty array instead of null.(¥¹ï8äÀú¿ì1
 D
-java:S1168¡"&Return an empty array instead of null.(¥¹ï8ƒïû¿ì1
+java:S1168¸"&Return an empty array instead of null.(¥¹ï8ƒïû¿ì1

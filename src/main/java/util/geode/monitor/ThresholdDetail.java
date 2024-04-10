@@ -10,7 +10,7 @@ public class ThresholdDetail {
 
 	public enum DetailType {
 		COUNT, PERCENT
-	};
+	}
 
 	protected double thresholdValue;
 	protected double value;

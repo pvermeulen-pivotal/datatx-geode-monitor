@@ -10,18 +10,18 @@ import util.geode.monitor.xml.ExcludedMessages;
  *
  */
 public interface Monitor {
-	public void sendAlert(LogMessage logMessage);
-	public int getCommandPort();
-	public Logger getExceptionLog();
-	public Logger getApplicationLog();
-	public void disconnect();
-	public Util getUtil();
-	public void initialize() throws Exception;
-	public boolean isAttachedToManager();
-	public boolean isShutdown();
-	public void setExcludedMessages(ExcludedMessages messages);
-	public void setShutdown(boolean shutdown);
-	public String[] getBlockers();
-	public void addBlocker(String blockerId);
-	public void removeBlocker(String blockerId);
+	void sendAlert(LogMessage logMessage);
+	int getCommandPort();
+	Logger getExceptionLog();
+	Logger getApplicationLog();
+	void disconnect();
+	Util getUtil();
+	void initialize() throws Exception;
+	boolean isAttachedToManager();
+	boolean isShutdown();
+	void setExcludedMessages(ExcludedMessages messages);
+	void setShutdown(boolean shutdown);
+	String[] getBlockers();
+	void addBlocker(String blockerId);
+	void removeBlocker(String blockerId);
 }
