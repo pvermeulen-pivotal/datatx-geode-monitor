@@ -519,18 +519,18 @@ public abstract class MonitorImpl implements Monitor {
      */
     private String getLoggingHeader() {
         StringBuilder sb = new StringBuilder();
-        if (!getEnvironment().isEmpty()) {
+        if (getEnvironment() != null && !getEnvironment().isEmpty()) {
             sb.append(getEnvironment());
         } else {
             sb.append("Environment - " + Constants.NOT_DEFINED);
         }
-        if (!getCluster().isEmpty()) {
+        if (getCluster() != null && !getCluster().isEmpty()) {
             sb.append(" | ");
             sb.append(getCluster());
         } else {
             sb.append(" | Cluster - " + Constants.NOT_DEFINED);
         }
-        if (!getSite().isEmpty()) {
+        if (getSite() != null && !getSite().isEmpty()) {
             sb.append(" | ");
             sb.append(getSite());
         } else {

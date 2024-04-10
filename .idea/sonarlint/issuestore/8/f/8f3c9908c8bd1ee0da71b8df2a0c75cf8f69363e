@@ -1,47 +1,47 @@
 
 l
-java:S1192ÿ"IDefine a constant instead of duplicating this literal "Internal" 3 times.(›§ºÿÿÿÿÿ8·¶§ì1
+java:S1192ÿ"IDefine a constant instead of duplicating this literal "Internal" 3 times.(›§ºÿÿÿÿÿ8µ”¿Áì1
 j
-java:S1192"GDefine a constant instead of duplicating this literal "member" 6 times.(ÖÁ§«ÿÿÿÿÿ8·¶§ì1
+java:S1192"GDefine a constant instead of duplicating this literal "member" 6 times.(ÖÁ§«ÿÿÿÿÿ8µ”¿Áì1
 u
-java:S1192Æ"WDefine a constant instead of duplicating this literal "ThresholdMonitorTask: " 3 times.(ô¹Áî8·¶§ì1
+java:S1192Æ"WDefine a constant instead of duplicating this literal "ThresholdMonitorTask: " 3 times.(ô¹Áî8µ”¿Áì1
 K
-java:S1604Ë"(Make this anonymous inner class a lambda(¡ñîûÿÿÿÿ8»¶§ì1
+java:S1604Ë"(Make this anonymous inner class a lambda(¡ñîûÿÿÿÿ8·”¿Áì1
 {
-java:S2142h"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ä ¹€8†Ê§ì1
+java:S2142h"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ä ¹€8ä¿Áì1
 u
-java:S3776"RRefactor this method to reduce its Cognitive Complexity from 39 to the 15 allowed.(‰ßıúÿÿÿÿ8²Ê§ì1
+java:S3776"RRefactor this method to reduce its Cognitive Complexity from 39 to the 15 allowed.(‰ßıúÿÿÿÿ8ô¿Áì1
 u
-java:S3776É"RRefactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.(÷¾Áıÿÿÿÿ8ÊÊ§ì1
-H	java:S106Í"+Replace this use of System.out by a logger.(¿Å¥í8ŞÊ§ì1
-M	java:S106Î"+Replace this use of System.out by a logger.(ùçõ¦øÿÿÿÿ8ßÊ§ì1
-H	java:S106Ï"+Replace this use of System.out by a logger.(¿Å¥í8ßÊ§ì1
+java:S3776É"RRefactor this method to reduce its Cognitive Complexity from 24 to the 15 allowed.(÷¾Áıÿÿÿÿ8ø¿Áì1
+H	java:S106Í"+Replace this use of System.out by a logger.(¿Å¥í8Ÿ¿Áì1
+M	java:S106Î"+Replace this use of System.out by a logger.(ùçõ¦øÿÿÿÿ8Ÿ¿Áì1
+H	java:S106Ï"+Replace this use of System.out by a logger.(¿Å¥í8‚Ÿ¿Áì1
 x
-java:S3038·"U"sendAlert" is defined in the "Monitor" interface and can be removed from this class.(·‘Ìÿÿÿÿÿ8ˆÖ†Àì1
+java:S3038·"U"sendAlert" is defined in the "Monitor" interface and can be removed from this class.(·‘Ìÿÿÿÿÿ8†Ÿ¿Áì1
 p
-java:S3776Á"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(µÑª8ëÊ§ì1
+java:S3776Á"RRefactor this method to reduce its Cognitive Complexity from 18 to the 15 allowed.(µÑª8‡Ÿ¿Áì1
 u
-java:S3776˜"RRefactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.(Š¤ßÿÿÿÿÿ8øÊ§ì1
+java:S3776˜"RRefactor this method to reduce its Cognitive Complexity from 17 to the 15 allowed.(Š¤ßÿÿÿÿÿ8ŒŸ¿Áì1
 u
-java:S3776„"RRefactor this method to reduce its Cognitive Complexity from 73 to the 15 allowed.(™«¯ÿÿÿÿÿ8—Ë§ì1
-M	java:S106¸"+Replace this use of System.out by a logger.(²¡„ºùÿÿÿÿ8àË§ì1
-M	java:S106¹"+Replace this use of System.out by a logger.(¶ıúõşÿÿÿÿ8÷Ë§ì1
+java:S3776„"RRefactor this method to reduce its Cognitive Complexity from 73 to the 15 allowed.(™«¯ÿÿÿÿÿ8•Ÿ¿Áì1
+M	java:S106¸"+Replace this use of System.out by a logger.(²¡„ºùÿÿÿÿ8ŸŸ¿Áì1
+M	java:S106¹"+Replace this use of System.out by a logger.(¶ıúõşÿÿÿÿ8 Ÿ¿Áì1
 u
-java:S3776„"RRefactor this method to reduce its Cognitive Complexity from 35 to the 15 allowed.(³â¼æúÿÿÿÿ8Ì§ì1
+java:S3776„"RRefactor this method to reduce its Cognitive Complexity from 35 to the 15 allowed.(³â¼æúÿÿÿÿ8¤Ÿ¿Áì1
 |
-java:S2142Û"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(”ı¾8ÈÌ§ì1
+java:S2142Û"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(”ı¾8§Ÿ¿Áì1
 P
-java:S3398„"-Move this method into "ThresholdMonitorTask".(™«¯ÿÿÿÿÿ8ÜÌ§ì1
+java:S3398„"-Move this method into "ThresholdMonitorTask".(™«¯ÿÿÿÿÿ8­Ÿ¿Áì1
 L
 java:S3398â
-")Move this method into "AgentMonitorTask".(µç²Âúÿÿÿÿ8ÆÔ–§ì1
+")Move this method into "AgentMonitorTask".(µç²Âúÿÿÿÿ8­Ÿ¿Áì1
 G
 java:S3398Ò
-")Move this method into "AgentMonitorTask".(¾´ŠÏ8ƒ’§ì1
+")Move this method into "AgentMonitorTask".(¾´ŠÏ8­Ÿ¿Áì1
 G
 java:S3398Ê
-")Move this method into "AgentMonitorTask".(ÜóÌË8ÜÌ§ì1
+")Move this method into "AgentMonitorTask".(ÜóÌË8­Ÿ¿Áì1
 é
-java:S6541„"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 69 to 64, Complexity from 33 to 14, Nesting Level from 4 to 2, Number of Variables from 11 to 6.(™«¯ÿÿÿÿÿ8İÌ§ì1
+java:S6541„"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 69 to 64, Complexity from 33 to 14, Nesting Level from 4 to 2, Number of Variables from 11 to 6.(™«¯ÿÿÿÿÿ8­Ÿ¿Áì1
 é
-java:S6541„"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 65 to 64, Complexity from 18 to 14, Nesting Level from 4 to 2, Number of Variables from 14 to 6.(³â¼æúÿÿÿÿ8ŞÌ§ì1
+java:S6541„"ÅA "Brain Method" was detected. Refactor it to reduce at least one of the following metrics: LOC from 65 to 64, Complexity from 18 to 14, Nesting Level from 4 to 2, Number of Variables from 14 to 6.(³â¼æúÿÿÿÿ8­Ÿ¿Áì1
